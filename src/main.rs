@@ -24,6 +24,8 @@ enum Days {
     Day3(TwoTasks),
     #[command(subcommand)]
     Day4(TwoTasks),
+    #[command(subcommand)]
+    Day5(TwoTasks),
 }
 
 #[derive(Subcommand)]
@@ -83,6 +85,11 @@ fn main() {
             match task {
                 TwoTasks::Task1(args) => days::day4::task1(&args.path),
                 TwoTasks::Task2(args) => days::day4::task2(&args.path),
+            },
+        Days::Day5(task) =>
+            match task {
+                TwoTasks::Task1(args) => days::day5::task1(&args.path),
+                TwoTasks::Task2(args) => days::day5::task2(&args.path),
             },
     }
 }
