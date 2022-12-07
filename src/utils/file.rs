@@ -11,6 +11,7 @@ use std::{
     str::FromStr,
     ops::Range,
 };
+use num::Num;
 
 pub fn read_lines<P>(filename: P) -> Result<Lines<BufReader<File>>>
 where P: AsRef<Path> {
@@ -74,5 +75,50 @@ where N: FromStr + Copy {
             acc.push(((res[0]..res[1]), (res[2]..res[3])));
         }
         acc
+    })
+}
+
+#[derive(Clone)]
+#[derive(PartialEq)]
+pub enum FilesystemType {
+    Dir,
+    File,
+}
+
+pub fn parse_filesystem<N>(std_output: Lines<BufReader<File>>) -> Vec<(FilesystemType, String, N)>
+where N: FromStr + Num {
+    let mut is_ls = false;
+    let mut working_directory = String::from("");
+    std_output.fold(Vec::<(FilesystemType, String, N)>::new(), |mut filesystem, itm| {
+        if let Ok(output_line) = itm {
+            if output_line.eq("$ cd ..") {
+                is_ls = false;
+                let mut path_parts: Vec<&str> = working_directory.split("/").collect();
+                path_parts.pop();
+                path_parts.pop();
+                working_directory = path_parts.join("/");
+                working_directory.push('/');
+            } else if output_line.eq("$ ls") {
+                is_ls = true;
+            } else if !output_line.starts_with("$") && is_ls {
+                if !output_line.starts_with("dir") {
+                    let file_stats: Vec<&str> = output_line.split(" ").collect();
+                    if let Ok(file_size) = file_stats[0].parse::<N>() {
+                        filesystem.push((FilesystemType::File, working_directory.clone() + file_stats[1], file_size));
+                    }
+                }
+            } else if output_line.starts_with("$ cd") {
+                is_ls = false;
+                let (_, dir_name) = output_line.split_at(5);
+                if working_directory.len() == 0 {
+                    working_directory = String::from(dir_name);
+                } else {
+                    working_directory.push_str(dir_name);
+                    working_directory.push('/');
+                }
+                filesystem.push((FilesystemType::Dir, working_directory.clone(), N::zero()));
+            }
+        }
+        filesystem
     })
 }
