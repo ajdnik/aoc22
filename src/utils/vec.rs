@@ -1,6 +1,6 @@
 use std::{
     option::Option,
-    ops::AddAssign,
+    ops::{AddAssign, Add},
 };
 use num::Num;
 
@@ -61,4 +61,44 @@ pub fn find_first_distinct_substring(buffer: String, substring_size: usize) -> u
         start_string = chars.as_str().to_string();
     }
     position
+}
+
+pub fn matrix_to_mask<N, T>(matrix: &Vec<Vec<N>>, handler: fn(usize, usize, &Vec<Vec<N>>) -> T) -> Vec<Vec<T>> {
+    let mut mask = Vec::new();
+    for y in 0..matrix.len() {
+        let mut row = Vec::new();
+        for x in 0..matrix[y].len() {
+            row.push(handler(x, y, &matrix));
+        }
+        mask.push(row);
+    }
+    mask
+}
+
+pub fn matrix_rotate180<N>(matrix: &Vec<Vec<N>>) -> Vec<Vec<N>>
+where N: Copy {
+    let mut rotated = Vec::new();
+    for y in (0..matrix.len()).rev() {
+        let mut row = Vec::new();
+        for x in (0..matrix[y].len()).rev() {
+            row.push(matrix[y][x]);
+        }
+        rotated.push(row);
+    }
+    rotated
+}
+
+pub fn matrix_merge<N>(mat_a: &Vec<Vec<N>>, mat_b: &Vec<Vec<N>>) -> Vec<Vec<N>>
+where N: Copy + Add<Output=N> {
+    let mut merged = Vec::new();
+    assert!(mat_a.len() == mat_b.len());
+    for y in 0..mat_a.len() {
+        assert!(mat_a[y].len() == mat_b[y].len());
+        let mut row = Vec::new();
+        for x in 0..mat_a[y].len() {
+            row.push(mat_a[y][x] + mat_b[y][x]);
+        }
+        merged.push(row);
+    }
+    merged
 }

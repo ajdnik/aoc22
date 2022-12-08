@@ -122,3 +122,18 @@ where N: FromStr + Num {
         filesystem
     })
 }
+
+pub fn to_matrix<N>(lines: Lines<BufReader<File>>) -> Vec<Vec<N>>
+where N: FromStr {
+    lines.fold(Vec::new(), |mut matrix, itm| {
+        if let Ok(line) = itm {
+            matrix.push(line.chars().fold(Vec::new(), |mut row, chr| {
+                if let Ok(val) = chr.to_string().parse::<N>() {
+                    row.push(val);
+                }
+                row
+            }));
+        }
+        matrix
+    })
+}
