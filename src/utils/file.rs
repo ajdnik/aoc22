@@ -12,6 +12,7 @@ use std::{
     ops::Range,
 };
 use num::Num;
+use log::error;
 
 pub fn read_lines<P>(filename: P) -> Result<Lines<BufReader<File>>>
 where P: AsRef<Path> {
@@ -135,5 +136,48 @@ where N: FromStr {
             }));
         }
         matrix
+    })
+}
+
+#[derive(Copy)]
+#[derive(Clone)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+pub fn to_movements(lines: Lines<BufReader<File>>) -> Vec<Direction> {
+    lines.fold(Vec::new(), |mut movements, itm| {
+        if let Ok(line) = itm {
+            let (direction, length) = line.split_at(2);
+            if let Ok(val) = length.parse::<usize>() {
+                match direction {
+                    "U " => {
+                        for _ in 0..val {
+                            movements.push(Direction::Up);
+                        }
+                    },
+                    "D " => {
+                        for _ in 0..val {
+                            movements.push(Direction::Down);
+                        }
+                    },
+                    "L " => {
+                        for _ in 0..val {
+                            movements.push(Direction::Left);
+                        }
+                    },
+                    "R " => {
+                        for _ in 0..val {
+                            movements.push(Direction::Right);
+                        }
+                    },
+                    &_ => error!("Unknown direction {}", direction), 
+                }
+            }
+        }
+        movements
     })
 }
