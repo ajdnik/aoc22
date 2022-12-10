@@ -181,3 +181,25 @@ pub fn to_movements(lines: Lines<BufReader<File>>) -> Vec<Direction> {
         movements
     })
 }
+
+pub enum CPUCommand {
+    Addx,
+    Noop,
+}
+
+pub fn to_commands<N>(input: Lines<BufReader<File>>) -> Vec<(CPUCommand, N)>
+where N: FromStr + Num {
+    input.fold(Vec::new(), |mut commands, itm| {
+        if let Ok(line) = itm {
+            if line.starts_with("noop") {
+                commands.push((CPUCommand::Noop, N::zero()));
+            } else {
+                let (_, num) = line.split_at(5);
+                if let Ok(val) = num.parse::<N>() {
+                    commands.push((CPUCommand::Addx, val));
+                }
+            }
+        }
+        commands
+    })
+}
