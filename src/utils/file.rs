@@ -203,3 +203,76 @@ where N: FromStr + Num {
         commands
     })
 }
+
+pub enum Operation<N> {
+    Add(N),
+    Multiply(N),
+    Pow2,
+    Unknown,
+}
+
+pub struct Monkey<N, T> {
+    pub items: Vec<N>,
+    pub op: Operation<N>,
+    pub test_divisible: N,
+    pub test_true: T,
+    pub test_false: T,
+}
+
+pub fn to_monkeys<N, T>(input: Lines<BufReader<File>>) -> Vec<Monkey<N,T>>
+where N: FromStr + Num, T: FromStr + Num {
+    input.fold(Vec::new(), |mut monkeys, itm| {
+        if let Ok(line) = itm {
+            if line.starts_with("Monkey") {
+                monkeys.push(Monkey{items:Vec::new(), op: Operation::Unknown, test_divisible: N::zero(), test_true: T::zero(), test_false: T::zero()});
+            } else if line.starts_with("  Starting items:") {
+                let (_, nums) = line.split_at(18);
+                let items = nums.split(", ");
+                let last_monkey = monkeys.last_mut().unwrap();
+                for item in items {
+                    if let Ok(val) = item.parse::<N>() {
+                        last_monkey.items.push(val);
+                    }
+                }
+            } else if line.starts_with("  Operation:") {
+                let (_, calc) = line.split_at(19);
+                let calc_parts: Vec<&str> = calc.split(" ").collect();
+                let last_monkey = monkeys.last_mut().unwrap();
+                match calc_parts[1] {
+                    "+" => {
+                        if let Ok(val) = calc_parts[2].parse::<N>() {
+                            last_monkey.op = Operation::Add(val);
+                        }
+                    },
+                    "*" => {
+                        if calc_parts[2] == "old" {
+                            last_monkey.op = Operation::Pow2;
+                        } else if let Ok(val) = calc_parts[2].parse::<N>() {
+                            last_monkey.op = Operation::Multiply(val);
+                        }
+                    },
+                    &_ => error!("Unsupported operation {}", calc),
+                }
+            } else if line.starts_with("  Test:") {
+                let (_, divisible) = line.split_at(21);
+                let last_monkey = monkeys.last_mut().unwrap();
+                if let Ok(val) = divisible.parse::<N>() {
+                    last_monkey.test_divisible = val;
+                }
+            } else if line.starts_with("    If true:") {
+                let (_, monkey) = line.split_at(29);
+                let last_monkey = monkeys.last_mut().unwrap();
+                if let Ok(val) = monkey.parse::<T>() {
+                    last_monkey.test_true = val;
+                } 
+            } else if line.starts_with("    If false:") {
+                let (_, monkey) = line.split_at(30);
+                let last_monkey = monkeys.last_mut().unwrap();
+                if let Ok(val) = monkey.parse::<T>() {
+                    last_monkey.test_false = val;
+                } 
+            }
+        }
+        monkeys
+    })
+}
