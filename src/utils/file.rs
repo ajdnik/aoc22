@@ -276,3 +276,37 @@ where N: FromStr + Num, T: FromStr + Num {
         monkeys
     })
 }
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+pub struct Position<N> {
+    pub x: N,
+    pub y: N,
+}
+
+pub fn to_elevation_map<N>(input: Lines<BufReader<File>>) -> (Vec<Vec<N>>, Position<usize>, Position<usize>)
+where N: From<u8> {
+    let mut x = 0;
+    let mut y = 0;
+    input.fold((Vec::new(), Position{x:0, y:0}, Position{x:0, y:0}), |output, itm| {
+        let (mut elevation, mut start, mut end) = output;
+        if let Ok(line) = itm {
+            x = 0;
+            elevation.push(line.chars().map(|chr| {
+                let mut ascii = chr as u8;
+                if chr == 'S' {
+                    start.x = x;
+                    start.y = y;
+                    ascii = 'a' as u8;
+                } else if chr == 'E' {
+                    end.x = x;
+                    end.y = y;
+                    ascii = 'z' as u8;
+                }
+                x += 1;
+                ascii.into()
+            }).collect());
+            y += 1;
+        }
+        (elevation, start, end)
+    })
+}
