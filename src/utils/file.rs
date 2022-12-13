@@ -310,3 +310,48 @@ where N: From<u8> {
         (elevation, start, end)
     })
 }
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum SignalParts<N> {
+    Start,
+    End,
+    Next,
+    Number(N),
+}
+
+pub fn to_signals<N>(lines: Lines<BufReader<File>>) -> Vec<Vec<SignalParts<N>>>
+where N: FromStr {
+    lines.fold(Vec::new(), |mut signals, itm| {
+        if let Ok(line) = itm {
+            if line.starts_with("[") {
+                let mut num_buffer = String::from("");
+                signals.push(line.chars().fold(Vec::new(), |mut signal, chr| {
+                    match chr {
+                        '[' => signal.push(SignalParts::Start),
+                        ']' => {
+                            if num_buffer.len() > 0 {
+                                if let Ok(val) = num_buffer.parse::<N>() {
+                                    signal.push(SignalParts::Number(val));
+                                }
+                                num_buffer = String::from("");
+                            }
+                            signal.push(SignalParts::End);
+                        },
+                        ',' => {
+                            if num_buffer.len() > 0 {
+                                if let Ok(val) = num_buffer.parse::<N>() {
+                                    signal.push(SignalParts::Number(val));
+                                }
+                                num_buffer = String::from("");
+                            }
+                            signal.push(SignalParts::Next);
+                        },
+                        c => num_buffer.push(c),
+                    }
+                    signal
+                }));
+            }
+        }
+        signals
+    })
+}
