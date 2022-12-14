@@ -24,6 +24,7 @@ Commands:
   day1
   day2
   day3
+  ...
   help  Print this message or the help of the given subcommand(s)
 
 Options:
