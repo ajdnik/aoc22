@@ -277,7 +277,7 @@ where N: FromStr + Num, T: FromStr + Num {
     })
 }
 
-#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
 pub struct Position<N> {
     pub x: N,
     pub y: N,
@@ -353,5 +353,21 @@ where N: FromStr {
             }
         }
         signals
+    })
+}
+
+pub fn to_walls<N>(lines: Lines<BufReader<File>>) -> Vec<Vec<Position<N>>>
+where N: FromStr {
+    lines.fold(Vec::new(), |mut walls, itm| {
+        if let Ok(line) = itm {
+            walls.push(line.split(" -> ").fold(Vec::new(), |mut points, point| {
+                let dim: Vec<&str> = point.split(",").collect();
+                if let (Ok(x), Ok(y)) = (dim[0].parse::<N>(), dim[1].parse::<N>()) {
+                    points.push(Position{x,y});
+                }
+                points
+            }));
+        }
+        walls
     })
 }
