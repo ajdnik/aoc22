@@ -44,6 +44,10 @@ enum Days {
     Day13(TwoTasks),
     #[command(subcommand)]
     Day14(TwoTasks),
+    #[command(subcommand)]
+    Day15(Day15Tasks),
+    #[command(subcommand)]
+    Day16(Day16Tasks),
 }
 
 #[derive(Subcommand)]
@@ -52,9 +56,49 @@ enum TwoTasks {
     Task2(TaskWithPath),
 }
 
+#[derive(Subcommand)]
+enum Day15Tasks {
+    Task1(TaskWithPathAndRow),
+    Task2(TaskWithPathAndMax),
+}
+
+#[derive(Subcommand)]
+enum Day16Tasks {
+    Task1(TaskWithPathAndMinutes30),
+    Task2(TaskWithPathAndMinutes26),
+}
+
 #[derive(Args)]
 struct TaskWithPath {
     path: String,
+}
+
+#[derive(Args)]
+struct TaskWithPathAndRow {
+    path: String,
+    #[arg(default_value_t = 2000000)]
+    row: i32,
+}
+
+#[derive(Args)]
+struct TaskWithPathAndMax {
+    path: String,
+    #[arg(default_value_t = 4000000)]
+    max: i32,
+}
+
+#[derive(Args)]
+struct TaskWithPathAndMinutes30 {
+    path: String,
+    #[arg(default_value_t = 30)]
+    minutes: u32,
+}
+
+#[derive(Args)]
+struct TaskWithPathAndMinutes26 {
+    path: String,
+    #[arg(default_value_t = 26)]
+    minutes: u32,
 }
 
 fn setup_logger(level: LevelFilter) -> Result<(), InitError> {
@@ -153,6 +197,16 @@ fn main() {
             match task {
                 TwoTasks::Task1(args) => days::day14::task1(&args.path),
                 TwoTasks::Task2(args) => days::day14::task2(&args.path),
+            },
+        Days::Day15(task) =>
+            match task {
+                Day15Tasks::Task1(args) => days::day15::task1(&args.path, args.row),
+                Day15Tasks::Task2(args) => days::day15::task2(&args.path, args.max),
+            },
+        Days::Day16(task) =>
+            match task {
+                Day16Tasks::Task1(args) => days::day16::task1(&args.path, args.minutes),
+                Day16Tasks::Task2(args) => days::day16::task2(&args.path, args.minutes),
             },
     }
 }

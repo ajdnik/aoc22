@@ -9,7 +9,7 @@ use std::{
     path::Path,
     option::Option,
     str::FromStr,
-    ops::Range,
+    ops::Range, collections::HashMap,
 };
 use num::Num;
 use log::error;
@@ -369,5 +369,50 @@ where N: FromStr {
             }));
         }
         walls
+    })
+}
+
+pub fn to_sensor_data<N>(lines: Lines<BufReader<File>>) -> Vec<(Position<N>, Position<N>)>
+where N: FromStr {
+    lines.fold(Vec::new(), |mut sensor_data, itm| {
+        if let Ok(line) = itm {
+            let parts: Vec<&str> = line.split(":").collect();
+            let (_, sensor_loc) = parts[0].split_at(10);
+            let (_, beacon_loc) = parts[1].split_at(22);
+            let sensor_parts: Vec<&str> = sensor_loc.split(", ").collect();
+            let beacon_parts: Vec<&str> = beacon_loc.split(", ").collect();
+            if let (Ok(sensor_x), Ok(sensor_y)) = (sensor_parts[0][2..].parse::<N>(), sensor_parts[1][2..].parse::<N>()) {
+                let sensor = Position{x: sensor_x, y: sensor_y};
+                if let (Ok(beacon_x), Ok(beacon_y)) = (beacon_parts[0][2..].parse::<N>(), beacon_parts[1][2..].parse::<N>()) {
+                    sensor_data.push((sensor, Position{x: beacon_x, y: beacon_y}));
+                }
+            }
+        }
+        sensor_data
+    })
+}
+
+pub fn to_valves<N>(lines: Lines<BufReader<File>>) -> HashMap<String, (N, Vec<String>)>
+where N: FromStr {
+    lines.fold(HashMap::new(), |mut valves, itm| {
+        if let Ok(line) = itm {
+            let parts: Vec<&str> = line.split("; ").collect();
+            let first_parts: Vec<&str> = parts[0].split(" ").collect();
+            let (_, rate_str) = first_parts[4].split_at(5);
+            if parts[1].starts_with("tunnels") {
+                let (_, second_parts) = parts[1].split_at(23);
+                let other_valves: Vec<&str> = second_parts.split(", ").collect();
+                if let Ok(rate) = rate_str.parse::<N>() {
+                    valves.insert(first_parts[1].to_string(), (rate, other_valves.iter().map(|s| s.to_string()).collect()));
+                }
+            } else {
+                let (_, second_parts) = parts[1].split_at(22);
+                let other_valves: Vec<&str> = second_parts.split(", ").collect();
+                if let Ok(rate) = rate_str.parse::<N>() {
+                    valves.insert(first_parts[1].to_string(), (rate, other_valves.iter().map(|s| s.to_string()).collect()));
+                }
+            }
+        }
+        valves
     })
 }
