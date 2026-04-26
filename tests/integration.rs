@@ -242,3 +242,13 @@ fn day19() {
         "Product of geodes from first 3 blueprints is 3472",
     );
 }
+
+#[test]
+fn day20() {
+    let input = read("input/day20/test.txt");
+    assert_contains(&day20::part1(&input).unwrap(), "Grove coordinates sum is 3");
+    assert_contains(
+        &day20::part2(&input).unwrap(),
+        "Grove coordinates sum is 1623178306",
+    );
+}

@@ -1,6 +1,6 @@
 # aoc22
 
-Advent of Code 2022 solutions in Rust. Days 1–19 implemented.
+Advent of Code 2022 solutions in Rust. Days 1–20 implemented.
 
 ## Layout
 
@@ -18,7 +18,7 @@ $ cargo build --release
 $ ./target/release/aoc22 <day> <part> <path> [extra]
 ```
 
-`<day>` is `1`–`19`, `<part>` is `1` or `2`. `[extra]` overrides the default for the puzzles that need it:
+`<day>` is `1`–`20`, `<part>` is `1` or `2`. `[extra]` overrides the default for the puzzles that need it:
 
 | day | part | extra |
 | --- | ---- | ----- |
@@ -42,7 +42,7 @@ $ ./target/release/aoc22 1 1 ./input/day01/test.txt
 $ cargo test --release
 ```
 
-Runs unit tests (parser correctness, malformed-input errors, `Signal` ordering) plus 19 integration tests that exercise every `partN` against its sample input.
+Runs unit tests (parser correctness, malformed-input errors, `Signal` ordering) plus 20 integration tests that exercise every `partN` against its sample input.
 
 ## Toolchain
 
