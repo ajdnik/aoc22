@@ -2,139 +2,50 @@ use crate::utils::file;
 use anyhow::Result;
 use log::{debug, info};
 
-#[derive(PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Position {
     x: i32,
     y: i32,
 }
 
-fn update_rest_of_rope(rope: &mut [Position]) {
-    if rope.len() < 3 {
-        return;
+fn follow(head: Position, tail: Position) -> Position {
+    let dx = head.x - tail.x;
+    let dy = head.y - tail.y;
+    if dx.abs() <= 1 && dy.abs() <= 1 {
+        return tail;
     }
-    for i in 2..rope.len() {
-        if rope[i - 1] == rope[i] {
-            continue;
-        }
-        if rope[i - 1].x == rope[i].x {
-            if rope[i - 1].y - rope[i].y > 1 {
-                rope[i].y += 1;
-            } else if rope[i - 1].y - rope[i].y < -1 {
-                rope[i].y -= 1;
-            }
-        } else if rope[i - 1].y == rope[i].y {
-            if rope[i - 1].x - rope[i].x > 1 {
-                rope[i].x += 1;
-            } else if rope[i - 1].x - rope[i].x < -1 {
-                rope[i].x -= 1;
-            }
-        } else {
-            if rope[i - 1].y - rope[i].y > 1 && rope[i - 1].x - rope[i].x > 1 {
-                rope[i].y += 1;
-                rope[i].x += 1;
-            } else if rope[i - 1].y - rope[i].y < -1 && rope[i - 1].x - rope[i].x < -1 {
-                rope[i].y -= 1;
-                rope[i].x -= 1;
-            } else if rope[i - 1].y - rope[i].y > 1 && rope[i - 1].x - rope[i].x < -1 {
-                rope[i].y += 1;
-                rope[i].x -= 1;
-            } else if rope[i - 1].y - rope[i].y < -1 && rope[i - 1].x - rope[i].x > 1 {
-                rope[i].y -= 1;
-                rope[i].x += 1;
-            } else if rope[i - 1].y - rope[i].y > 1 {
-                rope[i].y += 1;
-                if rope[i - 1].x != rope[i].x {
-                    rope[i].x = rope[i - 1].x;
-                }
-            } else if rope[i - 1].y - rope[i].y < -1 {
-                rope[i].y -= 1;
-                if rope[i - 1].x != rope[i].x {
-                    rope[i].x = rope[i - 1].x;
-                }
-            } else if rope[i - 1].x - rope[i].x > 1 {
-                rope[i].x += 1;
-                if rope[i - 1].y != rope[i].y {
-                    rope[i].y = rope[i - 1].y;
-                }
-            } else if rope[i - 1].x - rope[i].x < -1 {
-                rope[i].x -= 1;
-                if rope[i - 1].y != rope[i].y {
-                    rope[i].y = rope[i - 1].y;
-                }
-            }
-        }
+    Position {
+        x: tail.x + dx.signum(),
+        y: tail.y + dy.signum(),
     }
 }
 
-fn simulate_tail_movements(
-    movements: &[file::Direction],
-    curr_movement: usize,
-    rope: &mut [Position],
-) -> Vec<Position> {
-    if curr_movement == movements.len() {
-        return Vec::new();
+fn simulate(movements: &[file::Direction], rope_len: usize) -> usize {
+    let mut rope = vec![Position { x: 0, y: 0 }; rope_len];
+    let mut visited = vec![rope[rope_len - 1]];
+    for movement in movements {
+        match movement {
+            file::Direction::Up => rope[0].y += 1,
+            file::Direction::Down => rope[0].y -= 1,
+            file::Direction::Left => rope[0].x -= 1,
+            file::Direction::Right => rope[0].x += 1,
+        }
+        for i in 1..rope_len {
+            rope[i] = follow(rope[i - 1], rope[i]);
+        }
+        visited.push(rope[rope_len - 1]);
     }
-
-    let movement = movements[curr_movement];
-    match movement {
-        file::Direction::Down => {
-            rope[0].y -= 1;
-            if rope[1].y - rope[0].y > 1 {
-                rope[1].y -= 1;
-                if rope[1].x != rope[0].x {
-                    rope[1].x = rope[0].x;
-                }
-            }
-            update_rest_of_rope(rope);
-        }
-        file::Direction::Up => {
-            rope[0].y += 1;
-            if rope[0].y - rope[1].y > 1 {
-                rope[1].y += 1;
-                if rope[1].x != rope[0].x {
-                    rope[1].x = rope[0].x;
-                }
-            }
-            update_rest_of_rope(rope);
-        }
-        file::Direction::Left => {
-            rope[0].x -= 1;
-            if rope[1].x - rope[0].x > 1 {
-                rope[1].x -= 1;
-                if rope[1].y != rope[0].y {
-                    rope[1].y = rope[0].y;
-                }
-            }
-            update_rest_of_rope(rope);
-        }
-        file::Direction::Right => {
-            rope[0].x += 1;
-            if rope[0].x - rope[1].x > 1 {
-                rope[1].x += 1;
-                if rope[1].y != rope[0].y {
-                    rope[1].y = rope[0].y;
-                }
-            }
-            update_rest_of_rope(rope);
-        }
-    }
-    let mut visited = vec![Position {
-        x: rope[rope.len() - 1].x,
-        y: rope[rope.len() - 1].y,
-    }];
-    visited.extend(simulate_tail_movements(movements, curr_movement + 1, rope));
-    visited
+    visited.sort();
+    visited.dedup();
+    visited.len()
 }
 
 pub fn task1(path: &str) -> Result<()> {
     let lines = file::read_lines(path)?;
     let movements = file::to_movements(lines);
     debug!("Found {} rope movements", movements.len());
-    let mut rope = vec![Position { x: 0, y: 0 }, Position { x: 0, y: 0 }];
-    let mut pos = simulate_tail_movements(&movements, 0, &mut rope);
-    pos.sort();
-    pos.dedup();
-    info!("The tail visited {} places", pos.len());
+    let count = simulate(&movements, 2);
+    info!("The tail visited {} places", count);
     Ok(())
 }
 
@@ -142,21 +53,7 @@ pub fn task2(path: &str) -> Result<()> {
     let lines = file::read_lines(path)?;
     let movements = file::to_movements(lines);
     debug!("Found {} rope movements", movements.len());
-    let mut rope = vec![
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-        Position { x: 0, y: 0 },
-    ];
-    let mut pos = simulate_tail_movements(&movements, 0, &mut rope);
-    pos.sort();
-    pos.dedup();
-    info!("The tail visited {} places", pos.len());
+    let count = simulate(&movements, 10);
+    info!("The tail visited {} places", count);
     Ok(())
 }
