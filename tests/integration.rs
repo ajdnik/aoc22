@@ -259,3 +259,10 @@ fn day21() {
     assert_contains(&day21::part1(&input).unwrap(), "Root yells 152");
     assert_contains(&day21::part2(&input).unwrap(), "humn must yell 301");
 }
+
+#[test]
+fn day22() {
+    let input = read("input/day22/test.txt");
+    assert_contains(&day22::part1(&input).unwrap(), "Final password is 6032");
+    assert_contains(&day22::part2(&input).unwrap(), "Final password is 5031");
+}
