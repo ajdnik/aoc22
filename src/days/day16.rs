@@ -1,177 +1,139 @@
 use crate::utils::file;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use log::{debug, info};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
-fn find_shortest_path(
+fn build_indexed(
     valves: &HashMap<String, (u32, Vec<String>)>,
-    start: &String,
-    end: &String,
-) -> Vec<String> {
-    if start.eq(end) {
-        return vec![start.clone()];
+) -> (Vec<u32>, Vec<Vec<usize>>, HashMap<String, usize>) {
+    let mut names: Vec<String> = valves.keys().cloned().collect();
+    names.sort();
+    let idx: HashMap<String, usize> = names
+        .iter()
+        .enumerate()
+        .map(|(i, n)| (n.clone(), i))
+        .collect();
+    let n = names.len();
+    let mut flow_rates = vec![0u32; n];
+    let mut adj = vec![Vec::new(); n];
+    for (i, name) in names.iter().enumerate() {
+        let (rate, neighbors) = &valves[name];
+        flow_rates[i] = *rate;
+        adj[i] = neighbors.iter().map(|nb| idx[nb]).collect();
     }
-    let mut visited: HashSet<String> = HashSet::new();
-    visited.insert(start.clone());
-    let mut queue: VecDeque<Vec<String>> = VecDeque::new();
-    queue.push_front(vec![start.clone()]);
-    while let Some(path) = queue.pop_front() {
-        if let Some(last) = path.last() {
-            if let Some(valve_data) = valves.get(last) {
-                let (_, neighbors) = valve_data;
-                for neighbor in neighbors.iter() {
-                    if end.eq(neighbor) {
-                        let mut new_path = path.clone();
-                        new_path.push(neighbor.clone());
-                        return new_path;
-                    }
-                    if !visited.contains(neighbor) {
-                        let mut new_path = path.clone();
-                        new_path.push(neighbor.clone());
-                        queue.push_back(new_path);
-                        visited.insert(neighbor.clone());
+    (flow_rates, adj, idx)
+}
+
+fn shortest_distances(adj: &[Vec<usize>]) -> Vec<Vec<u32>> {
+    let n = adj.len();
+    (0..n)
+        .map(|src| {
+            let mut row = vec![u32::MAX; n];
+            row[src] = 0;
+            let mut queue = VecDeque::new();
+            queue.push_back(src);
+            while let Some(cur) = queue.pop_front() {
+                for &next in &adj[cur] {
+                    if row[next] == u32::MAX {
+                        row[next] = row[cur] + 1;
+                        queue.push_back(next);
                     }
                 }
             }
-        }
-    }
-    vec![]
+            row
+        })
+        .collect()
 }
 
-fn get_distances(
-    valves: &HashMap<String, (u32, Vec<String>)>,
-) -> HashMap<String, HashMap<String, u32>> {
-    let names = valves.iter().fold(Vec::new(), |mut names, valve| {
-        let (name, _) = valve;
-        names.push(name.clone());
-        names
-    });
-    let mut distances = HashMap::new();
-    for start_name in names.iter() {
-        let mut dist = HashMap::new();
-        for end_name in names.iter() {
-            let path = find_shortest_path(valves, start_name, end_name);
-            dist.insert(end_name.clone(), path.len() as u32);
-        }
-        distances.insert(start_name.clone(), dist);
-    }
-    distances
-}
-
-fn get_unopened(valves: &HashMap<String, (u32, Vec<String>)>) -> Vec<String> {
-    valves.iter().fold(Vec::new(), |mut unopened, valve_data| {
-        let (name, data) = valve_data;
-        let (flow_rate, _) = data;
-        if *flow_rate > 0 {
-            unopened.push(name.clone());
-        }
-        unopened
-    })
-}
-
-fn compute_all_flows(
-    valves: &HashMap<String, (u32, Vec<String>)>,
-    unopened: &[String],
-    path: &[String],
-    distances: &HashMap<String, HashMap<String, u32>>,
+#[allow(clippy::too_many_arguments)]
+fn explore(
+    flow_rates: &[u32],
+    dist: &[Vec<u32>],
+    useful: &[usize],
+    bits: &[u32],
+    current: usize,
     time_left: u32,
+    opened: u32,
     flow: u32,
-) -> Vec<(Vec<String>, u32)> {
-    let mut flows = Vec::new();
-    flows.push((path.to_vec(), flow));
-    if let Some(last) = path.last() {
-        if let Some(last_connections) = distances.get(last) {
-            for valve in unopened.iter() {
-                if let (Some(valve_distance), Some(valve_data)) =
-                    (last_connections.get(valve), valves.get(valve))
-                {
-                    let new_time_left = time_left as i32 - *valve_distance as i32;
-                    if new_time_left <= 0 {
-                        continue;
-                    }
-                    let (flow_rate, _) = valve_data;
-                    let new_flow = flow + new_time_left as u32 * *flow_rate;
-                    let mut new_path = path.to_vec();
-                    new_path.push(valve.clone());
-                    let new_unopened = unopened.iter().fold(Vec::new(), |mut unopened, v| {
-                        if !v.eq(valve) {
-                            unopened.push(v.clone());
-                        }
-                        unopened
-                    });
-                    let new_flows = compute_all_flows(
-                        valves,
-                        &new_unopened,
-                        &new_path,
-                        distances,
-                        new_time_left as u32,
-                        new_flow,
-                    );
-                    for flow in new_flows.iter() {
-                        flows.push(flow.clone());
-                    }
-                }
-            }
-        }
+    best: &mut HashMap<u32, u32>,
+) {
+    let entry = best.entry(opened).or_insert(0);
+    if flow > *entry {
+        *entry = flow;
     }
-    flows
+    for (i, &v) in useful.iter().enumerate() {
+        let bit = bits[i];
+        if opened & bit != 0 {
+            continue;
+        }
+        let cost = dist[current][v] + 1;
+        if cost >= time_left {
+            continue;
+        }
+        let new_time = time_left - cost;
+        let new_flow = flow + new_time * flow_rates[v];
+        explore(
+            flow_rates,
+            dist,
+            useful,
+            bits,
+            v,
+            new_time,
+            opened | bit,
+            new_flow,
+            best,
+        );
+    }
 }
 
-fn find_best_parallel_solutions(solutions: &[(Vec<String>, u32)], start: &str) -> u32 {
-    let mut max_flow = u32::MIN;
-    for a in 0..solutions.len() {
-        if let Some(a_item) = solutions.get(a) {
-            let (a_path, a_flow) = a_item;
-            let unique_a: HashSet<String> = a_path.clone().into_iter().collect();
-            for b in a..solutions.len() {
-                if let Some(b_item) = solutions.get(b) {
-                    let (b_path, b_flow) = b_item;
-                    let mut found = false;
-                    for node in b_path.iter() {
-                        if node.eq(start) {
-                            continue;
-                        }
-                        if unique_a.contains(node) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    let ttl_flow = a_flow + b_flow;
-                    if !found && ttl_flow > max_flow {
-                        max_flow = ttl_flow;
-                    }
-                }
+fn best_per_mask(
+    valves: &HashMap<String, (u32, Vec<String>)>,
+    minutes: u32,
+) -> Result<HashMap<u32, u32>> {
+    let (flow_rates, adj, idx) = build_indexed(valves);
+    let start = *idx.get("AA").context("missing valve AA")?;
+    let dist = shortest_distances(&adj);
+    let useful: Vec<usize> = (0..flow_rates.len())
+        .filter(|&i| flow_rates[i] > 0)
+        .collect();
+    let bits: Vec<u32> = (0..useful.len()).map(|i| 1u32 << i).collect();
+    let mut best = HashMap::new();
+    explore(
+        &flow_rates,
+        &dist,
+        &useful,
+        &bits,
+        start,
+        minutes,
+        0,
+        0,
+        &mut best,
+    );
+    Ok(best)
+}
+
+fn best_parallel(best: &HashMap<u32, u32>) -> u32 {
+    let entries: Vec<(u32, u32)> = best.iter().map(|(&m, &f)| (m, f)).collect();
+    let mut max = 0;
+    for i in 0..entries.len() {
+        let (mask_a, flow_a) = entries[i];
+        for &(mask_b, flow_b) in &entries[i..] {
+            if mask_a & mask_b == 0 && flow_a + flow_b > max {
+                max = flow_a + flow_b;
             }
         }
     }
-    max_flow
+    max
 }
 
 pub fn task1(path: &str, minutes: u32) -> Result<()> {
     let lines = file::read_lines(path)?;
     let valves = file::to_valves::<u32>(lines);
     debug!("Found {} valves", valves.len());
-    let distances = get_distances(&valves);
-    let unopened = get_unopened(&valves);
-    debug!("Found {} unopened valves", unopened.len());
-    let all_flows = compute_all_flows(
-        &valves,
-        &unopened,
-        &[String::from("AA")],
-        &distances,
-        minutes,
-        0,
-    );
-    debug!("Found {} possible solutions", all_flows.len());
-    let max_flow = all_flows.iter().fold(0, |max, result| {
-        let (_, flow) = result;
-        if *flow > max {
-            *flow
-        } else {
-            max
-        }
-    });
-    info!("Released {:?} pressure in {} minutes", max_flow, minutes);
+    let best = best_per_mask(&valves, minutes)?;
+    debug!("Found {} reachable opened-sets", best.len());
+    let max_flow = best.values().copied().max().unwrap_or(0);
+    info!("Released {} pressure in {} minutes", max_flow, minutes);
     Ok(())
 }
 
@@ -179,19 +141,9 @@ pub fn task2(path: &str, minutes: u32) -> Result<()> {
     let lines = file::read_lines(path)?;
     let valves = file::to_valves::<u32>(lines);
     debug!("Found {} valves", valves.len());
-    let distances = get_distances(&valves);
-    let unopened = get_unopened(&valves);
-    debug!("Found {} unopened valves", unopened.len());
-    let all_flows = compute_all_flows(
-        &valves,
-        &unopened,
-        &[String::from("AA")],
-        &distances,
-        minutes,
-        0,
-    );
-    debug!("Found {} possible solutions", all_flows.len());
-    let best_flow = find_best_parallel_solutions(&all_flows, "AA");
+    let best = best_per_mask(&valves, minutes)?;
+    debug!("Found {} reachable opened-sets", best.len());
+    let best_flow = best_parallel(&best);
     info!(
         "Released {} pressure in {} minutes when working with 1 elephant",
         best_flow, minutes
