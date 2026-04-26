@@ -556,22 +556,21 @@ where
         let (header, tail) = line
             .split_once("; ")
             .with_context(|| format!("malformed valve line {:?}", line))?;
-        let first_parts: Vec<&str> = header.split(' ').collect();
-        if first_parts.len() < 5 {
-            bail!("malformed valve header {:?}", line);
-        }
-        let rate_str = first_parts[4]
-            .strip_prefix("rate=")
-            .with_context(|| format!("missing 'rate=' in {:?}", first_parts[4]))?;
-        let second_parts = tail
+        let header = header
+            .strip_prefix("Valve ")
+            .with_context(|| format!("missing 'Valve' prefix {:?}", header))?;
+        let (name, rate_str) = header
+            .split_once(" has flow rate=")
+            .with_context(|| format!("malformed valve header {:?}", header))?;
+        let neighbors_str = tail
             .strip_prefix("tunnels lead to valves ")
             .or_else(|| tail.strip_prefix("tunnel leads to valve "))
             .with_context(|| format!("malformed tunnels {:?}", tail))?;
-        let other_valves: Vec<String> = second_parts.split(", ").map(String::from).collect();
+        let neighbors: Vec<String> = neighbors_str.split(", ").map(String::from).collect();
         let rate: N = rate_str
             .parse()
             .with_context(|| format!("parsing valve rate {:?}", rate_str))?;
-        valves.insert(first_parts[1].to_string(), (rate, other_valves));
+        valves.insert(name.to_string(), (rate, neighbors));
     }
     Ok(valves)
 }
