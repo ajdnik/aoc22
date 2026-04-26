@@ -1,31 +1,4 @@
-use num::Num;
-use std::{
-    ops::{Add, AddAssign},
-    option::Option,
-};
-
-pub fn sum_continuous_numbers<N>(numbers: Vec<Option<N>>) -> Vec<N>
-where
-    N: Num + AddAssign + Copy,
-{
-    numbers.iter().fold(Vec::new(), |mut acc, itm| {
-        if acc.is_empty() {
-            acc.push(N::zero());
-        }
-        match itm {
-            None => {
-                acc.push(N::zero());
-                acc
-            }
-            Some(val) => {
-                if let Some(itm) = acc.last_mut() {
-                    *itm += *val;
-                }
-                acc
-            }
-        }
-    })
-}
+use std::ops::Add;
 
 pub fn find_duplicate_chars(strings: &[String]) -> String {
     let mut duplicates = String::from("");

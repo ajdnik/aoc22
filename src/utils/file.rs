@@ -6,17 +6,25 @@ pub fn lines_of(input: &str) -> impl Iterator<Item = String> + '_ {
     input.lines().map(String::from)
 }
 
-/// Parses each line as `N`, mapping blank/unparsable lines to `None`.
-/// Used by callers that treat blank lines as group separators.
-pub fn lines_to_numbers<N, I>(lines: I) -> Vec<Option<N>>
+/// Splits input on blank lines, parsing each non-blank line as `N`.
+pub fn to_number_groups<N, I>(lines: I) -> Result<Vec<Vec<N>>>
 where
     N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
-    lines
-        .into_iter()
-        .map(|line| line.parse::<N>().ok())
-        .collect()
+    let mut groups: Vec<Vec<N>> = vec![Vec::new()];
+    for line in lines {
+        if line.is_empty() {
+            groups.push(Vec::new());
+            continue;
+        }
+        let val: N = line
+            .parse()
+            .with_context(|| format!("parsing number {:?}", line))?;
+        groups.last_mut().unwrap().push(val);
+    }
+    Ok(groups)
 }
 
 pub fn to_groups<I>(lines: I, size: usize) -> Vec<Vec<String>>
