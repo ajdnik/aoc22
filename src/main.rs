@@ -5,13 +5,13 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Day number (1-16)
+    /// Day number (1-17)
     day: u8,
     /// Part number (1 or 2)
     part: u8,
     /// Path to input file
     path: String,
-    /// Optional extra argument(s) (day15: row/max, day16: minutes)
+    /// Optional extra argument(s) (day15: row/max, day16: minutes, day17: rock count)
     extra: Vec<String>,
 }
 
@@ -61,6 +61,8 @@ fn dispatch(day: u8, part: u8, input: &str, extra: &[String]) -> Result<String> 
         (15, 2) => days::day15::part2(input, parse_extra::<i32>(extra, 4_000_000)?),
         (16, 1) => days::day16::part1(input, parse_extra::<u32>(extra, 30)?),
         (16, 2) => days::day16::part2(input, parse_extra::<u32>(extra, 26)?),
+        (17, 1) => days::day17::part1(input, parse_extra::<u64>(extra, 2022)?),
+        (17, 2) => days::day17::part2(input, parse_extra::<u64>(extra, 1_000_000_000_000)?),
         _ => Err(anyhow!("unknown day/part: {day} {part}")),
     }
 }

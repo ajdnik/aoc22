@@ -1,10 +1,10 @@
 # aoc22
 
-Advent of Code 2022 solutions in Rust. Days 1–16 implemented.
+Advent of Code 2022 solutions in Rust. Days 1–17 implemented.
 
 ## Layout
 
-- `src/days/dayN.rs` — solutions, each exposing `part1(input: &str) -> Result<String>` and `part2(...)`. Days 15 and 16 take an extra numeric argument (target row / minutes).
+- `src/days/dayN.rs` — solutions, each exposing `part1(input: &str) -> Result<String>` and `part2(...)`. Days 15, 16, and 17 take an extra numeric argument (target row / minutes / rock count).
 - `src/utils/file/` — input parsers, one per puzzle category (`groups`, `signals`, `valves`, `walls`, `sensors`, `monkeys`, …). Re-exported via `utils::file`.
 - `src/utils/vec.rs` — small generic helpers (matrix transforms, distinct-substring search).
 - `src/main.rs` — thin CLI dispatching `(day, part)` to the matching `partN`.
@@ -18,7 +18,7 @@ $ cargo build --release
 $ ./target/release/aoc22 <day> <part> <path> [extra]
 ```
 
-`<day>` is `1`–`16`, `<part>` is `1` or `2`. `[extra]` overrides the default for the puzzles that need it:
+`<day>` is `1`–`17`, `<part>` is `1` or `2`. `[extra]` overrides the default for the puzzles that need it:
 
 | day | part | extra |
 | --- | ---- | ----- |
@@ -26,6 +26,8 @@ $ ./target/release/aoc22 <day> <part> <path> [extra]
 | 15  | 2    | search bound (default `4_000_000`) |
 | 16  | 1    | minutes (default `30`) |
 | 16  | 2    | minutes (default `26`) |
+| 17  | 1    | rock count (default `2022`) |
+| 17  | 2    | rock count (default `1_000_000_000_000`) |
 
 Example:
 
@@ -40,7 +42,7 @@ $ ./target/release/aoc22 1 1 ./input/day01/test.txt
 $ cargo test --release
 ```
 
-Runs unit tests (parser correctness, malformed-input errors, `Signal` ordering) plus 16 integration tests that exercise every `partN` against its sample input.
+Runs unit tests (parser correctness, malformed-input errors, `Signal` ordering) plus 17 integration tests that exercise every `partN` against its sample input.
 
 ## Toolchain
 

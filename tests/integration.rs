@@ -206,3 +206,16 @@ fn day16() {
         "Released 1707 pressure in 26 minutes when working with 1 elephant",
     );
 }
+
+#[test]
+fn day17() {
+    let input = read("input/day17/test.txt");
+    assert_contains(
+        &day17::part1(&input, 2022).unwrap(),
+        "Tower height after 2022 rocks is 3068",
+    );
+    assert_contains(
+        &day17::part2(&input, 1_000_000_000_000).unwrap(),
+        "Tower height after 1000000000000 rocks is 1514285714288",
+    );
+}
