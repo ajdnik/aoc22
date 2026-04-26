@@ -117,9 +117,8 @@ where
                     size,
                 ));
             }
-        } else if line.starts_with("$ cd") {
+        } else if let Some(dir_name) = line.strip_prefix("$ cd ") {
             is_ls = false;
-            let (_, dir_name) = line.split_at(5);
             if working_directory.is_empty() {
                 working_directory = String::from(dir_name);
             } else {
@@ -170,18 +169,17 @@ where
         if line.is_empty() {
             continue;
         }
-        if line.len() < 3 {
-            bail!("malformed movement line {:?}", line);
-        }
-        let (direction, length) = line.split_at(2);
+        let (direction, length) = line
+            .split_once(' ')
+            .with_context(|| format!("malformed movement line {:?}", line))?;
         let val: usize = length
             .parse()
             .with_context(|| format!("parsing movement length {:?}", length))?;
         let dir = match direction {
-            "U " => Direction::Up,
-            "D " => Direction::Down,
-            "L " => Direction::Left,
-            "R " => Direction::Right,
+            "U" => Direction::Up,
+            "D" => Direction::Down,
+            "L" => Direction::Left,
+            "R" => Direction::Right,
             _ => bail!("unknown direction {:?}", direction),
         };
         for _ in 0..val {
@@ -207,10 +205,9 @@ where
         if line.is_empty() {
             continue;
         }
-        if line.starts_with("noop") {
+        if line == "noop" {
             commands.push((CPUCommand::Noop, N::zero()));
-        } else if line.starts_with("addx ") {
-            let (_, num) = line.split_at(5);
+        } else if let Some(num) = line.strip_prefix("addx ") {
             let val: N = num
                 .parse()
                 .with_context(|| format!("parsing addx operand {:?}", num))?;
@@ -506,32 +503,31 @@ where
         .into_iter()
         .filter(|l| !l.is_empty())
         .map(|line| {
-            let parts: Vec<&str> = line.split(':').collect();
-            if parts.len() != 2 {
-                bail!("malformed sensor line {:?}", line);
-            }
-            if parts[0].len() < 10 || parts[1].len() < 22 {
-                bail!("sensor line too short {:?}", line);
-            }
-            let (_, sensor_loc) = parts[0].split_at(10);
-            let (_, beacon_loc) = parts[1].split_at(22);
-            let sp: Vec<&str> = sensor_loc.split(", ").collect();
-            let bp: Vec<&str> = beacon_loc.split(", ").collect();
-            if sp.len() != 2 || bp.len() != 2 {
-                bail!("malformed sensor coordinates {:?}", line);
-            }
-            let sensor_x: N = sp[0][2..]
-                .parse()
-                .with_context(|| format!("sensor x {:?}", &sp[0][2..]))?;
-            let sensor_y: N = sp[1][2..]
-                .parse()
-                .with_context(|| format!("sensor y {:?}", &sp[1][2..]))?;
-            let beacon_x: N = bp[0][2..]
-                .parse()
-                .with_context(|| format!("beacon x {:?}", &bp[0][2..]))?;
-            let beacon_y: N = bp[1][2..]
-                .parse()
-                .with_context(|| format!("beacon y {:?}", &bp[1][2..]))?;
+            let (left, right) = line
+                .split_once(':')
+                .with_context(|| format!("malformed sensor line {:?}", line))?;
+            let sensor_loc = left
+                .strip_prefix("Sensor at ")
+                .with_context(|| format!("missing 'Sensor at' prefix {:?}", line))?;
+            let beacon_loc = right
+                .strip_prefix(" closest beacon is at ")
+                .with_context(|| format!("missing 'closest beacon is at' {:?}", line))?;
+            let (sx, sy) = sensor_loc
+                .split_once(", ")
+                .with_context(|| format!("malformed sensor coords {:?}", line))?;
+            let (bx, by) = beacon_loc
+                .split_once(", ")
+                .with_context(|| format!("malformed beacon coords {:?}", line))?;
+            let parse_coord = |s: &str, axis: &str| -> Result<N> {
+                s.strip_prefix(axis)
+                    .with_context(|| format!("missing '{}' prefix in {:?}", axis, s))?
+                    .parse()
+                    .with_context(|| format!("parsing coord {:?}", s))
+            };
+            let sensor_x = parse_coord(sx, "x=")?;
+            let sensor_y = parse_coord(sy, "y=")?;
+            let beacon_x = parse_coord(bx, "x=")?;
+            let beacon_y = parse_coord(by, "y=")?;
             Ok((
                 Position {
                     x: sensor_x,
@@ -557,24 +553,20 @@ where
         if line.is_empty() {
             continue;
         }
-        let parts: Vec<&str> = line.split("; ").collect();
-        if parts.len() != 2 {
-            bail!("malformed valve line {:?}", line);
-        }
-        let first_parts: Vec<&str> = parts[0].split(' ').collect();
-        if first_parts.len() < 5 || first_parts[4].len() < 5 {
+        let (header, tail) = line
+            .split_once("; ")
+            .with_context(|| format!("malformed valve line {:?}", line))?;
+        let first_parts: Vec<&str> = header.split(' ').collect();
+        if first_parts.len() < 5 {
             bail!("malformed valve header {:?}", line);
         }
-        let (_, rate_str) = first_parts[4].split_at(5);
-        let offset = if parts[1].starts_with("tunnels") {
-            23
-        } else {
-            22
-        };
-        if parts[1].len() < offset {
-            bail!("malformed valve tunnels {:?}", line);
-        }
-        let (_, second_parts) = parts[1].split_at(offset);
+        let rate_str = first_parts[4]
+            .strip_prefix("rate=")
+            .with_context(|| format!("missing 'rate=' in {:?}", first_parts[4]))?;
+        let second_parts = tail
+            .strip_prefix("tunnels lead to valves ")
+            .or_else(|| tail.strip_prefix("tunnel leads to valve "))
+            .with_context(|| format!("malformed tunnels {:?}", tail))?;
         let other_valves: Vec<String> = second_parts.split(", ").map(String::from).collect();
         let rate: N = rate_str
             .parse()
