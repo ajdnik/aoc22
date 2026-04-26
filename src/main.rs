@@ -1,8 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use aoc22::days;
 use clap::Parser;
-use fern::Dispatch;
-use log::{info, LevelFilter};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -15,18 +13,6 @@ struct Cli {
     path: String,
     /// Optional extra argument(s) (day15: row/max, day16: minutes)
     extra: Vec<String>,
-    /// Print verbose output
-    #[arg(short, long, action = clap::ArgAction::Count)]
-    verbose: u8,
-}
-
-fn setup_logger(level: LevelFilter) -> Result<()> {
-    Dispatch::new()
-        .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
-        .level(level)
-        .chain(std::io::stdout())
-        .apply()?;
-    Ok(())
 }
 
 fn parse_extra<T: std::str::FromStr>(extra: &[String], default: T) -> Result<T>
@@ -81,20 +67,11 @@ fn dispatch(day: u8, part: u8, input: &str, extra: &[String]) -> Result<String> 
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-
-    let level = if cli.verbose > 0 {
-        LevelFilter::Debug
-    } else {
-        LevelFilter::Info
-    };
-    setup_logger(level).context("failed to set up logger")?;
-
     let input = std::fs::read_to_string(&cli.path)
         .with_context(|| format!("failed to read input file {:?}", cli.path))?;
-
     let result = dispatch(cli.day, cli.part, &input, &cli.extra)?;
     for line in result.lines() {
-        info!("{}", line);
+        println!("[INFO] {}", line);
     }
     Ok(())
 }

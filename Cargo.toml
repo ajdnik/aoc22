@@ -9,5 +9,3 @@ description = "Advent Of Code 2022 CLI"
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.0.29", features = ["derive"] }
-fern = "0.6.1"
-log = "0.4.17"
