@@ -2,165 +2,37 @@ use crate::utils::file;
 use anyhow::{Context, Result};
 use std::cmp::Ordering;
 
-fn convert_to_sublist(
-    list: &[file::SignalParts<u32>],
-    start_index: usize,
-) -> (Vec<file::SignalParts<u32>>, usize) {
-    let mut start_count = 0;
-    let mut index = start_index;
-    let mut new_list = Vec::new();
-    while list.len() > index {
-        match list[index] {
-            file::SignalParts::Start => {
-                start_count += 1;
-                new_list.push(list[index]);
-            }
-            file::SignalParts::End => {
-                start_count -= 1;
-                new_list.push(list[index]);
-                if start_count == 0 {
-                    index += 1;
-                    break;
-                }
-            }
-            _ => {
-                new_list.push(list[index]);
-            }
-        }
-        index += 1;
-    }
-    (new_list, index)
-}
-
-fn is_in_right_order(
-    left: Vec<file::SignalParts<u32>>,
-    right: Vec<file::SignalParts<u32>>,
-) -> Ordering {
-    let mut left_idx = 1;
-    let mut right_idx = 1;
-    while left.len() > left_idx && right.len() > right_idx {
-        if let (file::SignalParts::Number(left_val), file::SignalParts::Number(right_val)) =
-            (left[left_idx], right[right_idx])
-        {
-            if left_val > right_val {
-                return Ordering::Greater;
-            } else if left_val < right_val {
-                return Ordering::Less;
-            }
-            left_idx += 1;
-            right_idx += 1;
-        } else if file::SignalParts::Next == left[left_idx]
-            && file::SignalParts::Next == right[right_idx]
-        {
-            left_idx += 1;
-            right_idx += 1;
-        } else if file::SignalParts::Start == left[left_idx]
-            && file::SignalParts::Start == right[right_idx]
-        {
-            let (new_left, new_left_idx) = convert_to_sublist(&left, left_idx);
-            let (new_right, new_right_idx) = convert_to_sublist(&right, right_idx);
-            let order = is_in_right_order(new_left, new_right);
-            if Ordering::Equal != order {
-                return order;
-            }
-            left_idx = new_left_idx;
-            right_idx = new_right_idx;
-        } else if file::SignalParts::Start == left[left_idx] {
-            let (new_left, new_left_idx) = convert_to_sublist(&left, left_idx);
-            if file::SignalParts::End == right[right_idx] {
-                return Ordering::Greater;
-            }
-            let new_right = vec![
-                file::SignalParts::Start,
-                right[right_idx],
-                file::SignalParts::End,
-            ];
-            let order = is_in_right_order(new_left, new_right);
-            if Ordering::Equal != order {
-                return order;
-            }
-            left_idx = new_left_idx;
-            right_idx += 1;
-        } else if file::SignalParts::Start == right[right_idx] {
-            let (new_right, new_right_idx) = convert_to_sublist(&right, right_idx);
-            if file::SignalParts::End == left[left_idx] {
-                return Ordering::Less;
-            }
-            let new_left = vec![
-                file::SignalParts::Start,
-                left[left_idx],
-                file::SignalParts::End,
-            ];
-            let order = is_in_right_order(new_left, new_right);
-            if Ordering::Equal != order {
-                return order;
-            }
-            left_idx += 1;
-            right_idx = new_right_idx;
-        } else {
-            break;
-        }
-    }
-    if left.len() - left_idx < right.len() - right_idx {
-        return Ordering::Less;
-    } else if left.len() - left_idx > right.len() - right_idx {
-        return Ordering::Greater;
-    }
-    Ordering::Equal
+fn divider(n: u32) -> file::Signal<u32> {
+    file::Signal::List(vec![file::Signal::List(vec![file::Signal::Number(n)])])
 }
 
 pub fn part1(input: &str) -> Result<String> {
     let signals = file::to_signals::<u32, _>(file::lines_of(input))?;
-    let mut sum = 0;
-    for (idx, i) in (1..).zip((0..signals.len()).step_by(2)) {
-        if Ordering::Greater != is_in_right_order(signals[i].clone(), signals[i + 1].clone()) {
-            sum += idx;
-        }
-    }
+    let sum: usize = signals
+        .chunks(2)
+        .enumerate()
+        .filter_map(|(idx, pair)| match pair {
+            [left, right] if left.cmp(right) != Ordering::Greater => Some(idx + 1),
+            _ => None,
+        })
+        .sum();
     Ok(format!("Sum of indices of ordered signals is {}", sum))
 }
 
 pub fn part2(input: &str) -> Result<String> {
     let mut signals = file::to_signals::<u32, _>(file::lines_of(input))?;
-    signals.push(vec![
-        file::SignalParts::Start,
-        file::SignalParts::Start,
-        file::SignalParts::Number(2),
-        file::SignalParts::End,
-        file::SignalParts::End,
-    ]);
-    signals.push(vec![
-        file::SignalParts::Start,
-        file::SignalParts::Start,
-        file::SignalParts::Number(6),
-        file::SignalParts::End,
-        file::SignalParts::End,
-    ]);
-    signals.sort_by(|left, right| is_in_right_order(left.clone(), right.clone()));
-    let divider_2 = signals
+    let div2 = divider(2);
+    let div6 = divider(6);
+    signals.push(div2.clone());
+    signals.push(div6.clone());
+    signals.sort();
+    let pos2 = signals
         .iter()
-        .position(|signal| {
-            signal.len() == 5
-                && signal[0] == file::SignalParts::Start
-                && signal[1] == file::SignalParts::Start
-                && signal[2] == file::SignalParts::Number(2)
-                && signal[3] == file::SignalParts::End
-                && signal[4] == file::SignalParts::End
-        })
+        .position(|s| s == &div2)
         .context("divider [[2]] not found")?;
-    let divider_6 = signals
+    let pos6 = signals
         .iter()
-        .position(|signal| {
-            signal.len() == 5
-                && signal[0] == file::SignalParts::Start
-                && signal[1] == file::SignalParts::Start
-                && signal[2] == file::SignalParts::Number(6)
-                && signal[3] == file::SignalParts::End
-                && signal[4] == file::SignalParts::End
-        })
+        .position(|s| s == &div6)
         .context("divider [[6]] not found")?;
-    Ok(format!(
-        "Decode key is {}",
-        (divider_2 + 1) * (divider_6 + 1)
-    ))
+    Ok(format!("Decode key is {}", (pos2 + 1) * (pos6 + 1)))
 }
