@@ -55,3 +55,40 @@ where
     }
     Ok(filesystem)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_cd_ls_dir_file() {
+        let lines = [
+            "$ cd /",
+            "$ ls",
+            "dir a",
+            "100 b.txt",
+            "$ cd a",
+            "$ ls",
+            "50 c.txt",
+            "$ cd ..",
+            "$ ls",
+        ]
+        .map(String::from);
+        let fs = parse_filesystem::<u32, _>(lines).unwrap();
+        let dirs: Vec<_> = fs
+            .iter()
+            .filter(|(k, _, _)| matches!(k, FilesystemType::Dir))
+            .map(|(_, p, _)| p.clone())
+            .collect();
+        assert_eq!(dirs, vec!["/".to_string(), "/a/".to_string()]);
+        let files: Vec<_> = fs
+            .iter()
+            .filter(|(k, _, _)| matches!(k, FilesystemType::File))
+            .map(|(_, p, s)| (p.clone(), *s))
+            .collect();
+        assert_eq!(
+            files,
+            vec![("/b.txt".to_string(), 100), ("/a/c.txt".to_string(), 50)]
+        );
+    }
+}

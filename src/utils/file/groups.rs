@@ -39,3 +39,36 @@ where
     }
     groups
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lines_of_splits_on_newlines() {
+        let v: Vec<String> = lines_of("a\nb\n\nc").collect();
+        assert_eq!(v, vec!["a", "b", "", "c"]);
+    }
+
+    #[test]
+    fn number_groups_separates_on_blank() {
+        let lines = ["1", "2", "", "3", "", "4", "5"].map(String::from);
+        let g = to_number_groups::<i32, _>(lines).unwrap();
+        assert_eq!(g, vec![vec![1, 2], vec![3], vec![4, 5]]);
+    }
+
+    #[test]
+    fn number_groups_errors_on_unparsable() {
+        let lines = ["1", "abc"].map(String::from);
+        assert!(to_number_groups::<i32, _>(lines).is_err());
+    }
+
+    #[test]
+    fn groups_chunks_by_size() {
+        let lines = ["a", "b", "c", "d", "e"].map(String::from);
+        assert_eq!(
+            to_groups(lines, 2),
+            vec![vec!["a", "b"], vec!["c", "d"], vec!["e"]]
+        );
+    }
+}

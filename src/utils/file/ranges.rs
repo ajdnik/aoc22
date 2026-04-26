@@ -36,3 +36,27 @@ where
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_pair_of_ranges() {
+        let lines = ["2-4,6-8"].map(String::from);
+        let r = to_range_touple::<i32, _>(lines).unwrap();
+        assert_eq!(r, vec![(2..4, 6..8)]);
+    }
+
+    #[test]
+    fn skips_blank_lines() {
+        let lines = ["", "1-2,3-4"].map(String::from);
+        assert_eq!(to_range_touple::<i32, _>(lines).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn errors_on_malformed() {
+        let lines = ["2-4"].map(String::from);
+        assert!(to_range_touple::<i32, _>(lines).is_err());
+    }
+}

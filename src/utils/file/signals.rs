@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::str::FromStr;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Signal<N> {
     Number(N),
     List(Vec<Signal<N>>),
@@ -85,4 +85,58 @@ where
         signals.push(parse_signal::<N>(&line)?);
     }
     Ok(signals)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cmp::Ordering;
+
+    fn parse(s: &str) -> Signal<u32> {
+        parse_signal::<u32>(s).unwrap()
+    }
+
+    #[test]
+    fn nested_lists_parse() {
+        let s = parse("[[1],[2,3]]");
+        if let Signal::List(outer) = s {
+            assert_eq!(outer.len(), 2);
+            assert!(matches!(outer[0], Signal::List(_)));
+        } else {
+            panic!("expected List");
+        }
+    }
+
+    #[test]
+    fn empty_list_parses() {
+        assert_eq!(parse("[]"), Signal::List(vec![]));
+    }
+
+    #[test]
+    fn number_lifts_against_list() {
+        // [1,1,3,1,1] vs [1,1,5,1,1] → Less at the 3<5 spot
+        assert_eq!(
+            parse("[1,1,3,1,1]").cmp(&parse("[1,1,5,1,1]")),
+            Ordering::Less
+        );
+    }
+
+    #[test]
+    fn shorter_list_is_less() {
+        assert_eq!(parse("[1,2,3]").cmp(&parse("[1,2,3,4]")), Ordering::Less);
+    }
+
+    #[test]
+    fn lift_number_to_list() {
+        // [[1],[2,3,4]] vs [[1],4] → second elem 4 vs [2,3,4]; 4 lifted to [4]; 4>2 so Greater
+        assert_eq!(
+            parse("[[1],[2,3,4]]").cmp(&parse("[[1],4]")),
+            Ordering::Less
+        );
+    }
+
+    #[test]
+    fn unclosed_signal_errors() {
+        assert!(parse_signal::<u32>("[1,2").is_err());
+    }
 }

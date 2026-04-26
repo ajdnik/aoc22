@@ -31,3 +31,24 @@ where
     }
     Ok(commands)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_noop_and_addx() {
+        let lines = ["noop", "addx 3", "addx -5"].map(String::from);
+        let cmds = to_commands::<i32, _>(lines).unwrap();
+        assert_eq!(cmds.len(), 3);
+        assert!(matches!(cmds[0], (CPUCommand::Noop, 0)));
+        assert!(matches!(cmds[1], (CPUCommand::Addx, 3)));
+        assert!(matches!(cmds[2], (CPUCommand::Addx, -5)));
+    }
+
+    #[test]
+    fn unknown_command_errors() {
+        let lines = ["jump 5"].map(String::from);
+        assert!(to_commands::<i32, _>(lines).is_err());
+    }
+}

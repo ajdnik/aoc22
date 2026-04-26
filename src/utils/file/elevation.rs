@@ -25,3 +25,17 @@ where
     }
     (elevation, start, end)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_start_end_to_a_z() {
+        let lines = ["SbE"].map(String::from);
+        let (m, s, e) = to_elevation_map::<u8, _>(lines);
+        assert_eq!(s, Position { x: 0, y: 0 });
+        assert_eq!(e, Position { x: 2, y: 0 });
+        assert_eq!(m, vec![vec![b'a', b'b', b'z']]);
+    }
+}

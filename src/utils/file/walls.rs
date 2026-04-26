@@ -30,3 +30,23 @@ where
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_polyline() {
+        let lines = ["1,2 -> 3,4 -> 5,6"].map(String::from);
+        let w = to_walls::<u32, _>(lines).unwrap();
+        assert_eq!(w.len(), 1);
+        assert_eq!(w[0].len(), 3);
+        assert_eq!(w[0][0], Position { x: 1, y: 2 });
+    }
+
+    #[test]
+    fn malformed_point_errors() {
+        let lines = ["1,2 -> 3"].map(String::from);
+        assert!(to_walls::<u32, _>(lines).is_err());
+    }
+}

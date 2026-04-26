@@ -36,3 +36,40 @@ where
     }
     Ok(movements)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn dirs(input: &[&str]) -> Vec<Direction> {
+        let lines = input.iter().map(|s| String::from(*s)).collect::<Vec<_>>();
+        to_movements(lines).unwrap()
+    }
+
+    #[test]
+    fn expands_count() {
+        let m = dirs(&["R 3"]);
+        assert_eq!(m.len(), 3);
+        assert!(matches!(m[0], Direction::Right));
+    }
+
+    #[test]
+    fn handles_all_dirs() {
+        let m = dirs(&["U 1", "D 1", "L 1", "R 1"]);
+        assert!(matches!(
+            m.as_slice(),
+            [
+                Direction::Up,
+                Direction::Down,
+                Direction::Left,
+                Direction::Right
+            ]
+        ));
+    }
+
+    #[test]
+    fn unknown_direction_errors() {
+        let lines = ["X 1"].map(String::from);
+        assert!(to_movements(lines).is_err());
+    }
+}

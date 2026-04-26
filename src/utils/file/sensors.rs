@@ -50,3 +50,23 @@ where
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_sensor_beacon_pair() {
+        let lines = ["Sensor at x=2, y=18: closest beacon is at x=-2, y=15"].map(String::from);
+        let d = to_sensor_data::<i32, _>(lines).unwrap();
+        assert_eq!(d.len(), 1);
+        assert_eq!(d[0].0, Position { x: 2, y: 18 });
+        assert_eq!(d[0].1, Position { x: -2, y: 15 });
+    }
+
+    #[test]
+    fn missing_prefix_errors() {
+        let lines = ["something at x=1, y=1: closest beacon is at x=2, y=2"].map(String::from);
+        assert!(to_sensor_data::<i32, _>(lines).is_err());
+    }
+}

@@ -128,3 +128,47 @@ where
     }
     Ok(monkeys)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample() -> Vec<String> {
+        [
+            "Monkey 0:",
+            "  Starting items: 79, 98",
+            "  Operation: new = old * 19",
+            "  Test: divisible by 23",
+            "    If true: throw to monkey 2",
+            "    If false: throw to monkey 3",
+        ]
+        .map(String::from)
+        .to_vec()
+    }
+
+    #[test]
+    fn parses_full_monkey() {
+        let m = to_monkeys::<u64, usize, _>(sample()).unwrap();
+        assert_eq!(m.len(), 1);
+        assert_eq!(m[0].items, vec![79, 98]);
+        assert!(matches!(m[0].op, Operation::Multiply(19)));
+        assert_eq!(m[0].test_divisible, 23);
+        assert_eq!(m[0].test_true, 2);
+        assert_eq!(m[0].test_false, 3);
+    }
+
+    #[test]
+    fn pow2_recognized() {
+        let mut s = sample();
+        s[2] = String::from("  Operation: new = old * old");
+        let m = to_monkeys::<u64, usize, _>(s).unwrap();
+        assert!(matches!(m[0].op, Operation::Pow2));
+    }
+
+    #[test]
+    fn missing_op_errors() {
+        let mut s = sample();
+        s.remove(2);
+        assert!(to_monkeys::<u64, usize, _>(s).is_err());
+    }
+}

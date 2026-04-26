@@ -33,3 +33,32 @@ where
     }
     Ok(valves)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_plural_tunnels() {
+        let lines = ["Valve AA has flow rate=0; tunnels lead to valves BB, CC"].map(String::from);
+        let v = to_valves::<u32, _>(lines).unwrap();
+        let (rate, neighbors) = &v["AA"];
+        assert_eq!(*rate, 0);
+        assert_eq!(neighbors, &vec!["BB".to_string(), "CC".to_string()]);
+    }
+
+    #[test]
+    fn parses_singular_tunnel() {
+        let lines = ["Valve HH has flow rate=22; tunnel leads to valve GG"].map(String::from);
+        let v = to_valves::<u32, _>(lines).unwrap();
+        let (rate, neighbors) = &v["HH"];
+        assert_eq!(*rate, 22);
+        assert_eq!(neighbors, &vec!["GG".to_string()]);
+    }
+
+    #[test]
+    fn missing_valve_prefix_errors() {
+        let lines = ["AA has flow rate=0; tunnel leads to valve BB"].map(String::from);
+        assert!(to_valves::<u32, _>(lines).is_err());
+    }
+}
