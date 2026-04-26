@@ -1,0 +1,130 @@
+use anyhow::{anyhow, bail, Context, Result};
+use num::Num;
+use std::str::FromStr;
+
+pub enum Operation<N> {
+    Add(N),
+    Multiply(N),
+    Pow2,
+}
+
+pub struct Monkey<N, T> {
+    pub items: Vec<N>,
+    pub op: Operation<N>,
+    pub test_divisible: N,
+    pub test_true: T,
+    pub test_false: T,
+}
+
+pub fn to_monkeys<N, T, I>(input: I) -> Result<Vec<Monkey<N, T>>>
+where
+    N: FromStr + Num,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    T: FromStr + Num,
+    <T as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    I: IntoIterator<Item = String>,
+{
+    struct Builder<N, T> {
+        items: Vec<N>,
+        op: Option<Operation<N>>,
+        test_divisible: Option<N>,
+        test_true: Option<T>,
+        test_false: Option<T>,
+    }
+    impl<N, T> Builder<N, T> {
+        fn new() -> Self {
+            Self {
+                items: Vec::new(),
+                op: None,
+                test_divisible: None,
+                test_true: None,
+                test_false: None,
+            }
+        }
+        fn finish(self, idx: usize) -> Result<Monkey<N, T>> {
+            Ok(Monkey {
+                items: self.items,
+                op: self
+                    .op
+                    .ok_or_else(|| anyhow!("monkey {} missing op", idx))?,
+                test_divisible: self
+                    .test_divisible
+                    .ok_or_else(|| anyhow!("monkey {} missing test divisor", idx))?,
+                test_true: self
+                    .test_true
+                    .ok_or_else(|| anyhow!("monkey {} missing test_true", idx))?,
+                test_false: self
+                    .test_false
+                    .ok_or_else(|| anyhow!("monkey {} missing test_false", idx))?,
+            })
+        }
+    }
+
+    let mut monkeys: Vec<Monkey<N, T>> = Vec::new();
+    let mut current: Option<Builder<N, T>> = None;
+    for line in input {
+        if line.starts_with("Monkey") {
+            if let Some(b) = current.take() {
+                monkeys.push(b.finish(monkeys.len())?);
+            }
+            current = Some(Builder::new());
+        } else if let Some(stripped) = line.strip_prefix("  Starting items: ") {
+            let b = current
+                .as_mut()
+                .context("'Starting items' before Monkey header")?;
+            for item in stripped.split(", ") {
+                b.items.push(
+                    item.parse()
+                        .with_context(|| format!("parsing monkey item {:?}", item))?,
+                );
+            }
+        } else if let Some(stripped) = line.strip_prefix("  Operation: new = old ") {
+            let b = current
+                .as_mut()
+                .context("'Operation' before Monkey header")?;
+            let parts: Vec<&str> = stripped.split(' ').collect();
+            if parts.len() != 2 {
+                bail!("malformed operation {:?}", stripped);
+            }
+            b.op = Some(match (parts[0], parts[1]) {
+                ("+", val) => Operation::Add(
+                    val.parse()
+                        .with_context(|| format!("parsing operand {:?}", val))?,
+                ),
+                ("*", "old") => Operation::Pow2,
+                ("*", val) => Operation::Multiply(
+                    val.parse()
+                        .with_context(|| format!("parsing operand {:?}", val))?,
+                ),
+                _ => bail!("unsupported operation {:?}", stripped),
+            });
+        } else if let Some(stripped) = line.strip_prefix("  Test: divisible by ") {
+            let b = current.as_mut().context("'Test' before Monkey header")?;
+            b.test_divisible = Some(
+                stripped
+                    .parse()
+                    .with_context(|| format!("parsing test divisor {:?}", stripped))?,
+            );
+        } else if let Some(stripped) = line.strip_prefix("    If true: throw to monkey ") {
+            let b = current.as_mut().context("'If true' before Monkey header")?;
+            b.test_true = Some(
+                stripped
+                    .parse()
+                    .with_context(|| format!("parsing test_true {:?}", stripped))?,
+            );
+        } else if let Some(stripped) = line.strip_prefix("    If false: throw to monkey ") {
+            let b = current
+                .as_mut()
+                .context("'If false' before Monkey header")?;
+            b.test_false = Some(
+                stripped
+                    .parse()
+                    .with_context(|| format!("parsing test_false {:?}", stripped))?,
+            );
+        }
+    }
+    if let Some(b) = current.take() {
+        monkeys.push(b.finish(monkeys.len())?);
+    }
+    Ok(monkeys)
+}
