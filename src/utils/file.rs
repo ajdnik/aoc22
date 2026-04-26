@@ -20,7 +20,7 @@ pub use matrix::to_matrix;
 pub use monkeys::{to_monkeys, Monkey, Operation};
 pub use movements::{to_movements, Direction};
 pub use position::Position;
-pub use ranges::to_range_touple;
+pub use ranges::to_range_tuple;
 pub use sensors::to_sensor_data;
 pub use signals::{to_signals, Signal};
 pub use valves::to_valves;
