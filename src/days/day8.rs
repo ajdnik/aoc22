@@ -1,10 +1,7 @@
-use crate::utils::{
-    file,
-    vec,
-};
+use crate::utils::{file, vec};
 use log::{debug, info};
 
-fn is_visible(x: usize, y: usize, matrix: &Vec<Vec<u8>>) -> u8 {
+fn is_visible(x: usize, y: usize, matrix: &[Vec<u8>]) -> u8 {
     if y == 0 || y == matrix.len() - 1 {
         return 1;
     }
@@ -32,7 +29,7 @@ fn is_visible(x: usize, y: usize, matrix: &Vec<Vec<u8>>) -> u8 {
     0
 }
 
-fn calc_cover(x: usize, y: usize, matrix: &Vec<Vec<u8>>) -> usize {
+fn calc_cover(x: usize, y: usize, matrix: &[Vec<u8>]) -> usize {
     if y == 0 || y == matrix.len() - 1 {
         return 0;
     }
@@ -46,7 +43,6 @@ fn calc_cover(x: usize, y: usize, matrix: &Vec<Vec<u8>>) -> usize {
         if matrix[z][x] >= matrix[y][x] {
             break;
         }
-
     }
     let mut left = 0;
     for z in (0..x).rev() {
@@ -54,23 +50,20 @@ fn calc_cover(x: usize, y: usize, matrix: &Vec<Vec<u8>>) -> usize {
         if matrix[y][z] >= matrix[y][x] {
             break;
         }
-
     }
     let mut right = 0;
-    for z in x+1..matrix[y].len() {
+    for z in x + 1..matrix[y].len() {
         right += 1;
         if matrix[y][z] >= matrix[y][x] {
             break;
         }
-
     }
     let mut down = 0;
-    for z in y+1..matrix.len() {
+    for z in y + 1..matrix.len() {
         down += 1;
         if matrix[z][x] >= matrix[y][x] {
             break;
         }
-
     }
     up * left * right * down
 }
@@ -78,12 +71,15 @@ fn calc_cover(x: usize, y: usize, matrix: &Vec<Vec<u8>>) -> usize {
 pub fn task1(path: &str) {
     if let Ok(lines) = file::read_lines(path) {
         let forest = file::to_matrix::<u8>(lines);
-        assert!(forest.len() > 0);
+        assert!(!forest.is_empty());
         debug!("Loaded {} x {} forest", forest.len(), forest[0].len());
         let visible_top_left = vec::matrix_to_mask(&forest, is_visible);
         let reversed_forest = vec::matrix_rotate180(&forest);
         let visible_bottom_right = vec::matrix_to_mask(&reversed_forest, is_visible);
-        let all_visible = vec::matrix_merge(&visible_top_left, &vec::matrix_rotate180(&visible_bottom_right));
+        let all_visible = vec::matrix_merge(
+            &visible_top_left,
+            &vec::matrix_rotate180(&visible_bottom_right),
+        );
         let total_seen = all_visible.iter().fold(0, |mut sum, row| {
             sum += row.iter().fold(0, |sum, val| {
                 if *val > 0 {
@@ -100,7 +96,7 @@ pub fn task1(path: &str) {
 pub fn task2(path: &str) {
     if let Ok(lines) = file::read_lines(path) {
         let forest = file::to_matrix::<u8>(lines);
-        assert!(forest.len() > 0);
+        assert!(!forest.is_empty());
         debug!("Loaded {} x {} forest", forest.len(), forest[0].len());
         let cover_scores = vec::matrix_to_mask(&forest, calc_cover);
         let max_score = cover_scores.iter().fold(0_usize, |max, row| {
@@ -111,5 +107,5 @@ pub fn task2(path: &str) {
             max
         });
         info!("Best cover score amongst the trees is {}", max_score);
-    } 
+    }
 }

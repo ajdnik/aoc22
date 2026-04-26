@@ -1,20 +1,17 @@
 use crate::utils::file;
+use log::{debug, info};
 use std::{
     fs::File,
-    io::{
-        Lines,
-        BufReader,
-    },
+    io::{BufReader, Lines},
 };
-use log::{debug, info};
 
-pub fn to_scores(lines: Lines<BufReader<File>>) -> Vec<Option<Vec<i32>>> { 
-    lines.map(|line| {
-        match line {
+pub fn to_scores(lines: Lines<BufReader<File>>) -> Vec<Option<Vec<i32>>> {
+    lines
+        .map(|line| match line {
             Err(_) => None,
             Ok(itm) => {
                 let mut scores = vec![0, 0];
-                match itm.chars().nth(0) {
+                match itm.chars().next() {
                     Some('A') => scores[0] = 1,
                     Some('B') => scores[0] = 2,
                     Some('C') => scores[0] = 3,
@@ -27,23 +24,19 @@ pub fn to_scores(lines: Lines<BufReader<File>>) -> Vec<Option<Vec<i32>>> {
                     _ => (),
                 }
                 Some(scores)
-            },
-        }
-    }).collect()
+            }
+        })
+        .collect()
 }
 
 fn total_score(scores: Vec<Option<Vec<i32>>>) -> i32 {
     let mut total_score = 0;
-    for score in scores.iter() {
-        if let Some(itm) = score {
-            total_score += itm[1];
-            if itm[0] == itm[1] {
-                total_score += 3;
-            } else if itm[0] + 1 == itm[1] {
-                total_score += 6;
-            } else if itm[0] == 3 && itm[1] == 1 {
-                total_score += 6;
-            }
+    for itm in scores.iter().flatten() {
+        total_score += itm[1];
+        if itm[0] == itm[1] {
+            total_score += 3;
+        } else if itm[0] + 1 == itm[1] || (itm[0] == 3 && itm[1] == 1) {
+            total_score += 6;
         }
     }
     total_score
@@ -51,28 +44,26 @@ fn total_score(scores: Vec<Option<Vec<i32>>>) -> i32 {
 
 fn fixed_match(scores: Vec<Option<Vec<i32>>>) -> i32 {
     let mut total_score = 0;
-    for score in scores.iter() {
-        if let Some(itm) = score {
-            match itm[1] {
-                1 => {
-                    let mut a = itm[0] - 1;
-                    if a == 0 {
-                        a = 3;
-                    }
-                    total_score += a;
-                },
-                2 => {
-                    total_score += itm[0] + 3;
-                },
-                3 => {
-                    let mut a = itm[0] + 1;
-                    if a == 4 {
-                        a = 1;
-                    }
-                    total_score += a + 6;
-                },
-                _ => (),
+    for itm in scores.iter().flatten() {
+        match itm[1] {
+            1 => {
+                let mut a = itm[0] - 1;
+                if a == 0 {
+                    a = 3;
+                }
+                total_score += a;
             }
+            2 => {
+                total_score += itm[0] + 3;
+            }
+            3 => {
+                let mut a = itm[0] + 1;
+                if a == 4 {
+                    a = 1;
+                }
+                total_score += a + 6;
+            }
+            _ => (),
         }
     }
     total_score
@@ -94,5 +85,4 @@ pub fn task2(path: &str) {
         let fixed_total = fixed_match(scores);
         info!("Total fixed score is {}", fixed_total);
     }
-
 }

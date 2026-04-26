@@ -1,38 +1,33 @@
-use std::{
-    fs::File,
-    io::{
-        BufRead,
-        BufReader,
-        Result,
-        Lines,
-    },
-    path::Path,
-    option::Option,
-    str::FromStr,
-    ops::Range, collections::HashMap,
-};
-use num::Num;
 use log::error;
+use num::Num;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufRead, BufReader, Lines, Result},
+    ops::Range,
+    option::Option,
+    path::Path,
+    str::FromStr,
+};
 
 pub fn read_lines<P>(filename: P) -> Result<Lines<BufReader<File>>>
-where P: AsRef<Path> {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename)?;
     Ok(BufReader::new(file).lines())
 }
 
 pub fn lines_to_numbers<N>(lines: Lines<BufReader<File>>) -> Vec<Option<N>>
-where N: FromStr {
-    lines.map(|line| {
-        match line {
+where
+    N: FromStr,
+{
+    lines
+        .map(|line| match line {
             Err(_) => None,
-            Ok(itm) => {
-                match itm.parse::<N>() {
-                    Err(_) => None,
-                    Ok(num) => Some(num),
-                }
-            },
-        }
-    }).collect()
+            Ok(itm) => itm.parse::<N>().ok(),
+        })
+        .collect()
 }
 
 pub fn to_groups(lines: Lines<BufReader<File>>, size: usize) -> Vec<Vec<String>> {
@@ -50,11 +45,13 @@ pub fn to_groups(lines: Lines<BufReader<File>>, size: usize) -> Vec<Vec<String>>
             }
         }
         groups
-    }) 
+    })
 }
 
 pub fn to_range_touple<N>(lines: Lines<BufReader<File>>) -> Vec<(Range<N>, Range<N>)>
-where N: FromStr + Copy {
+where
+    N: FromStr + Copy,
+{
     lines.fold(Vec::new(), |mut acc, line| {
         if let Ok(itm) = line {
             let ranges: Vec<&str> = itm.split(",").collect();
@@ -79,53 +76,63 @@ where N: FromStr + Copy {
     })
 }
 
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum FilesystemType {
     Dir,
     File,
 }
 
 pub fn parse_filesystem<N>(std_output: Lines<BufReader<File>>) -> Vec<(FilesystemType, String, N)>
-where N: FromStr + Num {
+where
+    N: FromStr + Num,
+{
     let mut is_ls = false;
     let mut working_directory = String::from("");
-    std_output.fold(Vec::<(FilesystemType, String, N)>::new(), |mut filesystem, itm| {
-        if let Ok(output_line) = itm {
-            if output_line.eq("$ cd ..") {
-                is_ls = false;
-                let mut path_parts: Vec<&str> = working_directory.split("/").collect();
-                path_parts.pop();
-                path_parts.pop();
-                working_directory = path_parts.join("/");
-                working_directory.push('/');
-            } else if output_line.eq("$ ls") {
-                is_ls = true;
-            } else if !output_line.starts_with("$") && is_ls {
-                if !output_line.starts_with("dir") {
-                    let file_stats: Vec<&str> = output_line.split(" ").collect();
-                    if let Ok(file_size) = file_stats[0].parse::<N>() {
-                        filesystem.push((FilesystemType::File, working_directory.clone() + file_stats[1], file_size));
-                    }
-                }
-            } else if output_line.starts_with("$ cd") {
-                is_ls = false;
-                let (_, dir_name) = output_line.split_at(5);
-                if working_directory.len() == 0 {
-                    working_directory = String::from(dir_name);
-                } else {
-                    working_directory.push_str(dir_name);
+    std_output.fold(
+        Vec::<(FilesystemType, String, N)>::new(),
+        |mut filesystem, itm| {
+            if let Ok(output_line) = itm {
+                if output_line.eq("$ cd ..") {
+                    is_ls = false;
+                    let mut path_parts: Vec<&str> = working_directory.split("/").collect();
+                    path_parts.pop();
+                    path_parts.pop();
+                    working_directory = path_parts.join("/");
                     working_directory.push('/');
+                } else if output_line.eq("$ ls") {
+                    is_ls = true;
+                } else if !output_line.starts_with("$") && is_ls {
+                    if !output_line.starts_with("dir") {
+                        let file_stats: Vec<&str> = output_line.split(" ").collect();
+                        if let Ok(file_size) = file_stats[0].parse::<N>() {
+                            filesystem.push((
+                                FilesystemType::File,
+                                working_directory.clone() + file_stats[1],
+                                file_size,
+                            ));
+                        }
+                    }
+                } else if output_line.starts_with("$ cd") {
+                    is_ls = false;
+                    let (_, dir_name) = output_line.split_at(5);
+                    if working_directory.is_empty() {
+                        working_directory = String::from(dir_name);
+                    } else {
+                        working_directory.push_str(dir_name);
+                        working_directory.push('/');
+                    }
+                    filesystem.push((FilesystemType::Dir, working_directory.clone(), N::zero()));
                 }
-                filesystem.push((FilesystemType::Dir, working_directory.clone(), N::zero()));
             }
-        }
-        filesystem
-    })
+            filesystem
+        },
+    )
 }
 
 pub fn to_matrix<N>(lines: Lines<BufReader<File>>) -> Vec<Vec<N>>
-where N: FromStr {
+where
+    N: FromStr,
+{
     lines.fold(Vec::new(), |mut matrix, itm| {
         if let Ok(line) = itm {
             matrix.push(line.chars().fold(Vec::new(), |mut row, chr| {
@@ -139,8 +146,7 @@ where N: FromStr {
     })
 }
 
-#[derive(Copy)]
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub enum Direction {
     Up,
     Down,
@@ -158,23 +164,23 @@ pub fn to_movements(lines: Lines<BufReader<File>>) -> Vec<Direction> {
                         for _ in 0..val {
                             movements.push(Direction::Up);
                         }
-                    },
+                    }
                     "D " => {
                         for _ in 0..val {
                             movements.push(Direction::Down);
                         }
-                    },
+                    }
                     "L " => {
                         for _ in 0..val {
                             movements.push(Direction::Left);
                         }
-                    },
+                    }
                     "R " => {
                         for _ in 0..val {
                             movements.push(Direction::Right);
                         }
-                    },
-                    &_ => error!("Unknown direction {}", direction), 
+                    }
+                    &_ => error!("Unknown direction {}", direction),
                 }
             }
         }
@@ -188,7 +194,9 @@ pub enum CPUCommand {
 }
 
 pub fn to_commands<N>(input: Lines<BufReader<File>>) -> Vec<(CPUCommand, N)>
-where N: FromStr + Num {
+where
+    N: FromStr + Num,
+{
     input.fold(Vec::new(), |mut commands, itm| {
         if let Ok(line) = itm {
             if line.starts_with("noop") {
@@ -219,12 +227,21 @@ pub struct Monkey<N, T> {
     pub test_false: T,
 }
 
-pub fn to_monkeys<N, T>(input: Lines<BufReader<File>>) -> Vec<Monkey<N,T>>
-where N: FromStr + Num, T: FromStr + Num {
+pub fn to_monkeys<N, T>(input: Lines<BufReader<File>>) -> Vec<Monkey<N, T>>
+where
+    N: FromStr + Num,
+    T: FromStr + Num,
+{
     input.fold(Vec::new(), |mut monkeys, itm| {
         if let Ok(line) = itm {
             if line.starts_with("Monkey") {
-                monkeys.push(Monkey{items:Vec::new(), op: Operation::Unknown, test_divisible: N::zero(), test_true: T::zero(), test_false: T::zero()});
+                monkeys.push(Monkey {
+                    items: Vec::new(),
+                    op: Operation::Unknown,
+                    test_divisible: N::zero(),
+                    test_true: T::zero(),
+                    test_false: T::zero(),
+                });
             } else if line.starts_with("  Starting items:") {
                 let (_, nums) = line.split_at(18);
                 let items = nums.split(", ");
@@ -243,14 +260,14 @@ where N: FromStr + Num, T: FromStr + Num {
                         if let Ok(val) = calc_parts[2].parse::<N>() {
                             last_monkey.op = Operation::Add(val);
                         }
-                    },
+                    }
                     "*" => {
                         if calc_parts[2] == "old" {
                             last_monkey.op = Operation::Pow2;
                         } else if let Ok(val) = calc_parts[2].parse::<N>() {
                             last_monkey.op = Operation::Multiply(val);
                         }
-                    },
+                    }
                     &_ => error!("Unsupported operation {}", calc),
                 }
             } else if line.starts_with("  Test:") {
@@ -264,13 +281,13 @@ where N: FromStr + Num, T: FromStr + Num {
                 let last_monkey = monkeys.last_mut().unwrap();
                 if let Ok(val) = monkey.parse::<T>() {
                     last_monkey.test_true = val;
-                } 
+                }
             } else if line.starts_with("    If false:") {
                 let (_, monkey) = line.split_at(30);
                 let last_monkey = monkeys.last_mut().unwrap();
                 if let Ok(val) = monkey.parse::<T>() {
                     last_monkey.test_false = val;
-                } 
+                }
             }
         }
         monkeys
@@ -283,32 +300,43 @@ pub struct Position<N> {
     pub y: N,
 }
 
-pub fn to_elevation_map<N>(input: Lines<BufReader<File>>) -> (Vec<Vec<N>>, Position<usize>, Position<usize>)
-where N: From<u8> {
+pub fn to_elevation_map<N>(
+    input: Lines<BufReader<File>>,
+) -> (Vec<Vec<N>>, Position<usize>, Position<usize>)
+where
+    N: From<u8>,
+{
     let mut x = 0;
     let mut y = 0;
-    input.fold((Vec::new(), Position{x:0, y:0}, Position{x:0, y:0}), |output, itm| {
-        let (mut elevation, mut start, mut end) = output;
-        if let Ok(line) = itm {
-            x = 0;
-            elevation.push(line.chars().map(|chr| {
-                let mut ascii = chr as u8;
-                if chr == 'S' {
-                    start.x = x;
-                    start.y = y;
-                    ascii = 'a' as u8;
-                } else if chr == 'E' {
-                    end.x = x;
-                    end.y = y;
-                    ascii = 'z' as u8;
-                }
-                x += 1;
-                ascii.into()
-            }).collect());
-            y += 1;
-        }
-        (elevation, start, end)
-    })
+    input.fold(
+        (Vec::new(), Position { x: 0, y: 0 }, Position { x: 0, y: 0 }),
+        |output, itm| {
+            let (mut elevation, mut start, mut end) = output;
+            if let Ok(line) = itm {
+                x = 0;
+                elevation.push(
+                    line.chars()
+                        .map(|chr| {
+                            let mut ascii = chr as u8;
+                            if chr == 'S' {
+                                start.x = x;
+                                start.y = y;
+                                ascii = b'a';
+                            } else if chr == 'E' {
+                                end.x = x;
+                                end.y = y;
+                                ascii = b'z';
+                            }
+                            x += 1;
+                            ascii.into()
+                        })
+                        .collect(),
+                );
+                y += 1;
+            }
+            (elevation, start, end)
+        },
+    )
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -320,7 +348,9 @@ pub enum SignalParts<N> {
 }
 
 pub fn to_signals<N>(lines: Lines<BufReader<File>>) -> Vec<Vec<SignalParts<N>>>
-where N: FromStr {
+where
+    N: FromStr,
+{
     lines.fold(Vec::new(), |mut signals, itm| {
         if let Ok(line) = itm {
             if line.starts_with("[") {
@@ -329,23 +359,23 @@ where N: FromStr {
                     match chr {
                         '[' => signal.push(SignalParts::Start),
                         ']' => {
-                            if num_buffer.len() > 0 {
+                            if !num_buffer.is_empty() {
                                 if let Ok(val) = num_buffer.parse::<N>() {
                                     signal.push(SignalParts::Number(val));
                                 }
                                 num_buffer = String::from("");
                             }
                             signal.push(SignalParts::End);
-                        },
+                        }
                         ',' => {
-                            if num_buffer.len() > 0 {
+                            if !num_buffer.is_empty() {
                                 if let Ok(val) = num_buffer.parse::<N>() {
                                     signal.push(SignalParts::Number(val));
                                 }
                                 num_buffer = String::from("");
                             }
                             signal.push(SignalParts::Next);
-                        },
+                        }
                         c => num_buffer.push(c),
                     }
                     signal
@@ -357,13 +387,15 @@ where N: FromStr {
 }
 
 pub fn to_walls<N>(lines: Lines<BufReader<File>>) -> Vec<Vec<Position<N>>>
-where N: FromStr {
+where
+    N: FromStr,
+{
     lines.fold(Vec::new(), |mut walls, itm| {
         if let Ok(line) = itm {
             walls.push(line.split(" -> ").fold(Vec::new(), |mut points, point| {
                 let dim: Vec<&str> = point.split(",").collect();
                 if let (Ok(x), Ok(y)) = (dim[0].parse::<N>(), dim[1].parse::<N>()) {
-                    points.push(Position{x,y});
+                    points.push(Position { x, y });
                 }
                 points
             }));
@@ -373,7 +405,9 @@ where N: FromStr {
 }
 
 pub fn to_sensor_data<N>(lines: Lines<BufReader<File>>) -> Vec<(Position<N>, Position<N>)>
-where N: FromStr {
+where
+    N: FromStr,
+{
     lines.fold(Vec::new(), |mut sensor_data, itm| {
         if let Ok(line) = itm {
             let parts: Vec<&str> = line.split(":").collect();
@@ -381,10 +415,25 @@ where N: FromStr {
             let (_, beacon_loc) = parts[1].split_at(22);
             let sensor_parts: Vec<&str> = sensor_loc.split(", ").collect();
             let beacon_parts: Vec<&str> = beacon_loc.split(", ").collect();
-            if let (Ok(sensor_x), Ok(sensor_y)) = (sensor_parts[0][2..].parse::<N>(), sensor_parts[1][2..].parse::<N>()) {
-                let sensor = Position{x: sensor_x, y: sensor_y};
-                if let (Ok(beacon_x), Ok(beacon_y)) = (beacon_parts[0][2..].parse::<N>(), beacon_parts[1][2..].parse::<N>()) {
-                    sensor_data.push((sensor, Position{x: beacon_x, y: beacon_y}));
+            if let (Ok(sensor_x), Ok(sensor_y)) = (
+                sensor_parts[0][2..].parse::<N>(),
+                sensor_parts[1][2..].parse::<N>(),
+            ) {
+                let sensor = Position {
+                    x: sensor_x,
+                    y: sensor_y,
+                };
+                if let (Ok(beacon_x), Ok(beacon_y)) = (
+                    beacon_parts[0][2..].parse::<N>(),
+                    beacon_parts[1][2..].parse::<N>(),
+                ) {
+                    sensor_data.push((
+                        sensor,
+                        Position {
+                            x: beacon_x,
+                            y: beacon_y,
+                        },
+                    ));
                 }
             }
         }
@@ -393,7 +442,9 @@ where N: FromStr {
 }
 
 pub fn to_valves<N>(lines: Lines<BufReader<File>>) -> HashMap<String, (N, Vec<String>)>
-where N: FromStr {
+where
+    N: FromStr,
+{
     lines.fold(HashMap::new(), |mut valves, itm| {
         if let Ok(line) = itm {
             let parts: Vec<&str> = line.split("; ").collect();
@@ -403,13 +454,19 @@ where N: FromStr {
                 let (_, second_parts) = parts[1].split_at(23);
                 let other_valves: Vec<&str> = second_parts.split(", ").collect();
                 if let Ok(rate) = rate_str.parse::<N>() {
-                    valves.insert(first_parts[1].to_string(), (rate, other_valves.iter().map(|s| s.to_string()).collect()));
+                    valves.insert(
+                        first_parts[1].to_string(),
+                        (rate, other_valves.iter().map(|s| s.to_string()).collect()),
+                    );
                 }
             } else {
                 let (_, second_parts) = parts[1].split_at(22);
                 let other_valves: Vec<&str> = second_parts.split(", ").collect();
                 if let Ok(rate) = rate_str.parse::<N>() {
-                    valves.insert(first_parts[1].to_string(), (rate, other_valves.iter().map(|s| s.to_string()).collect()));
+                    valves.insert(
+                        first_parts[1].to_string(),
+                        (rate, other_valves.iter().map(|s| s.to_string()).collect()),
+                    );
                 }
             }
         }

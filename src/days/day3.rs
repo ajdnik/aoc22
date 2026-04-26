@@ -1,10 +1,7 @@
-use crate::utils::{
-    file,
-    vec,
-};
+use crate::utils::{file, vec};
 use log::{debug, info};
 
-pub fn to_priority_sum(str: String) -> i32 { 
+pub fn to_priority_sum(str: String) -> i32 {
     let mut sum: i32 = 0;
     for char in str.chars() {
         let ascii = char as u8;
@@ -23,7 +20,7 @@ pub fn task1(path: &str) {
             if let Ok(itm) = backpack {
                 let sz = itm.len();
                 let (first, last) = itm.split_at(sz / 2);
-                let duplicates = vec::find_duplicate_chars(&vec![first.to_string(), last.to_string()]);
+                let duplicates = vec::find_duplicate_chars(&[first.to_string(), last.to_string()]);
                 let priority = to_priority_sum(duplicates);
                 sum += priority;
             }

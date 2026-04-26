@@ -1,25 +1,45 @@
-use std::collections::{VecDeque, HashMap};
 use crate::utils::file;
 use log::{debug, info};
+use std::collections::{HashMap, VecDeque};
 
-fn neighbors(elevation: &Vec<Vec<u32>>, center: &file::Position<usize>) -> Vec<file::Position<usize>> {
+fn neighbors(elevation: &[Vec<u32>], center: &file::Position<usize>) -> Vec<file::Position<usize>> {
     let mut neighbors = Vec::new();
     if center.y != 0 && elevation[center.y - 1][center.x] + 1 >= elevation[center.y][center.x] {
-        neighbors.push(file::Position{x: center.x, y: center.y - 1});
+        neighbors.push(file::Position {
+            x: center.x,
+            y: center.y - 1,
+        });
     }
-    if center.y != elevation.len() - 1 && elevation[center.y + 1][center.x] + 1 >= elevation[center.y][center.x] {
-        neighbors.push(file::Position{x: center.x, y: center.y + 1});
+    if center.y != elevation.len() - 1
+        && elevation[center.y + 1][center.x] + 1 >= elevation[center.y][center.x]
+    {
+        neighbors.push(file::Position {
+            x: center.x,
+            y: center.y + 1,
+        });
     }
     if center.x != 0 && elevation[center.y][center.x - 1] + 1 >= elevation[center.y][center.x] {
-        neighbors.push(file::Position{x: center.x - 1, y: center.y});
+        neighbors.push(file::Position {
+            x: center.x - 1,
+            y: center.y,
+        });
     }
-    if center.x != elevation[center.y].len() - 1 && elevation[center.y][center.x + 1] + 1 >= elevation[center.y][center.x] {
-        neighbors.push(file::Position{x: center.x + 1, y: center.y});
+    if center.x != elevation[center.y].len() - 1
+        && elevation[center.y][center.x + 1] + 1 >= elevation[center.y][center.x]
+    {
+        neighbors.push(file::Position {
+            x: center.x + 1,
+            y: center.y,
+        });
     }
     neighbors
 }
 
-fn path_length(elevation: &Vec<Vec<u32>>, start: &file::Position<usize>, end: &file::Position<usize>) -> Option<usize> {
+fn path_length(
+    elevation: &[Vec<u32>],
+    start: &file::Position<usize>,
+    end: &file::Position<usize>,
+) -> Option<usize> {
     let mut must_visit = VecDeque::new();
     must_visit.push_back(*start);
     let mut distances: HashMap<file::Position<usize>, usize> = HashMap::new();
@@ -45,14 +65,14 @@ fn path_length(elevation: &Vec<Vec<u32>>, start: &file::Position<usize>, end: &f
     None
 }
 
-fn find_beginnings(elevation: &Vec<Vec<u32>>, beginning: u32) -> Vec<file::Position<usize>> {
+fn find_beginnings(elevation: &[Vec<u32>], beginning: u32) -> Vec<file::Position<usize>> {
     let mut y = 0;
     let mut x = 0;
     elevation.iter().fold(Vec::new(), |mut beginnings, row| {
         x = 0;
         for val in row.iter() {
             if *val == beginning {
-                beginnings.push(file::Position::<usize>{x, y});
+                beginnings.push(file::Position::<usize> { x, y });
             }
             x += 1;
         }
@@ -89,5 +109,5 @@ pub fn task2(path: &str) {
             }
         }
         info!("Shortest path is {}", min_length);
-    } 
+    }
 }

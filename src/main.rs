@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
+use fern::{Dispatch, InitError};
 use log::LevelFilter;
-use fern::{InitError, Dispatch};
 mod days;
 mod utils;
 
@@ -103,13 +103,7 @@ struct TaskWithPathAndMinutes26 {
 
 fn setup_logger(level: LevelFilter) -> Result<(), InitError> {
     Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "[{}] {}",
-                record.level(),
-                message
-            ))
-        })
+        .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
         .level(level)
         .chain(std::io::stdout())
         .apply()?;
@@ -128,85 +122,69 @@ fn main() {
     }
 
     match &cli.day {
-        Days::Day1(task) => 
-            match task {
-                TwoTasks::Task1(args) => days::day1::task1(&args.path),
-                TwoTasks::Task2(args) => days::day1::task2(&args.path),
-            },
-        Days::Day2(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day2::task1(&args.path),
-                TwoTasks::Task2(args) => days::day2::task2(&args.path),
-            },
-        Days::Day3(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day3::task1(&args.path),
-                TwoTasks::Task2(args) => days::day3::task2(&args.path),
-            },
-        Days::Day4(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day4::task1(&args.path),
-                TwoTasks::Task2(args) => days::day4::task2(&args.path),
-            },
-        Days::Day5(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day5::task1(&args.path),
-                TwoTasks::Task2(args) => days::day5::task2(&args.path),
-            },
-        Days::Day6(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day6::task1(&args.path),
-                TwoTasks::Task2(args) => days::day6::task2(&args.path),
-            },
-        Days::Day7(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day7::task1(&args.path),
-                TwoTasks::Task2(args) => days::day7::task2(&args.path),
-            },
-        Days::Day8(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day8::task1(&args.path),
-                TwoTasks::Task2(args) => days::day8::task2(&args.path),
-            },
-        Days::Day9(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day9::task1(&args.path),
-                TwoTasks::Task2(args) => days::day9::task2(&args.path),
-            },
-        Days::Day10(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day10::task1(&args.path),
-                TwoTasks::Task2(args) => days::day10::task2(&args.path),
-            },
-        Days::Day11(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day11::task1(&args.path),
-                TwoTasks::Task2(args) => days::day11::task2(&args.path),
-            },
-        Days::Day12(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day12::task1(&args.path),
-                TwoTasks::Task2(args) => days::day12::task2(&args.path),
-            },
-        Days::Day13(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day13::task1(&args.path),
-                TwoTasks::Task2(args) => days::day13::task2(&args.path),
-            },
-        Days::Day14(task) =>
-            match task {
-                TwoTasks::Task1(args) => days::day14::task1(&args.path),
-                TwoTasks::Task2(args) => days::day14::task2(&args.path),
-            },
-        Days::Day15(task) =>
-            match task {
-                Day15Tasks::Task1(args) => days::day15::task1(&args.path, args.row),
-                Day15Tasks::Task2(args) => days::day15::task2(&args.path, args.max),
-            },
-        Days::Day16(task) =>
-            match task {
-                Day16Tasks::Task1(args) => days::day16::task1(&args.path, args.minutes),
-                Day16Tasks::Task2(args) => days::day16::task2(&args.path, args.minutes),
-            },
+        Days::Day1(task) => match task {
+            TwoTasks::Task1(args) => days::day1::task1(&args.path),
+            TwoTasks::Task2(args) => days::day1::task2(&args.path),
+        },
+        Days::Day2(task) => match task {
+            TwoTasks::Task1(args) => days::day2::task1(&args.path),
+            TwoTasks::Task2(args) => days::day2::task2(&args.path),
+        },
+        Days::Day3(task) => match task {
+            TwoTasks::Task1(args) => days::day3::task1(&args.path),
+            TwoTasks::Task2(args) => days::day3::task2(&args.path),
+        },
+        Days::Day4(task) => match task {
+            TwoTasks::Task1(args) => days::day4::task1(&args.path),
+            TwoTasks::Task2(args) => days::day4::task2(&args.path),
+        },
+        Days::Day5(task) => match task {
+            TwoTasks::Task1(args) => days::day5::task1(&args.path),
+            TwoTasks::Task2(args) => days::day5::task2(&args.path),
+        },
+        Days::Day6(task) => match task {
+            TwoTasks::Task1(args) => days::day6::task1(&args.path),
+            TwoTasks::Task2(args) => days::day6::task2(&args.path),
+        },
+        Days::Day7(task) => match task {
+            TwoTasks::Task1(args) => days::day7::task1(&args.path),
+            TwoTasks::Task2(args) => days::day7::task2(&args.path),
+        },
+        Days::Day8(task) => match task {
+            TwoTasks::Task1(args) => days::day8::task1(&args.path),
+            TwoTasks::Task2(args) => days::day8::task2(&args.path),
+        },
+        Days::Day9(task) => match task {
+            TwoTasks::Task1(args) => days::day9::task1(&args.path),
+            TwoTasks::Task2(args) => days::day9::task2(&args.path),
+        },
+        Days::Day10(task) => match task {
+            TwoTasks::Task1(args) => days::day10::task1(&args.path),
+            TwoTasks::Task2(args) => days::day10::task2(&args.path),
+        },
+        Days::Day11(task) => match task {
+            TwoTasks::Task1(args) => days::day11::task1(&args.path),
+            TwoTasks::Task2(args) => days::day11::task2(&args.path),
+        },
+        Days::Day12(task) => match task {
+            TwoTasks::Task1(args) => days::day12::task1(&args.path),
+            TwoTasks::Task2(args) => days::day12::task2(&args.path),
+        },
+        Days::Day13(task) => match task {
+            TwoTasks::Task1(args) => days::day13::task1(&args.path),
+            TwoTasks::Task2(args) => days::day13::task2(&args.path),
+        },
+        Days::Day14(task) => match task {
+            TwoTasks::Task1(args) => days::day14::task1(&args.path),
+            TwoTasks::Task2(args) => days::day14::task2(&args.path),
+        },
+        Days::Day15(task) => match task {
+            Day15Tasks::Task1(args) => days::day15::task1(&args.path, args.row),
+            Day15Tasks::Task2(args) => days::day15::task2(&args.path, args.max),
+        },
+        Days::Day16(task) => match task {
+            Day16Tasks::Task1(args) => days::day16::task1(&args.path, args.minutes),
+            Day16Tasks::Task2(args) => days::day16::task2(&args.path, args.minutes),
+        },
     }
 }

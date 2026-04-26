@@ -8,9 +8,9 @@ pub fn task1(path: &str) {
         let mut count = 0;
         for pair in pairs.iter() {
             let (first, second) = pair;
-            if first.start <= second.start && first.end >= second.end {
-                count += 1;
-            } else if second.start <= first.start && second.end >= first.end {
+            if (first.start <= second.start && first.end >= second.end)
+                || (second.start <= first.start && second.end >= first.end)
+            {
                 count += 1;
             }
         }
@@ -30,5 +30,5 @@ pub fn task2(path: &str) {
             }
         }
         info!("Found {} overlapping pairs", count);
-    } 
+    }
 }

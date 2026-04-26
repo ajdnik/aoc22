@@ -1,15 +1,23 @@
-use std::{cmp::{max, min}, ops::Sub};
 use crate::utils::file;
 use log::{debug, info};
 use num::{abs, Signed};
+use std::{
+    cmp::{max, min},
+    ops::Sub,
+};
 
 fn distance<N>(a: &file::Position<N>, b: &file::Position<N>) -> N
-where N: Sub<Output=N> + Copy, <N as Sub>::Output: Signed {
+where
+    N: Sub<Output = N> + Copy,
+    <N as Sub>::Output: Signed,
+{
     abs(a.x - b.x) + abs(a.y - b.y)
 }
 
 fn is_range_overlap<N>(a: &(N, N), b: &(N, N)) -> bool
-where N: PartialOrd {
+where
+    N: PartialOrd,
+{
     let (begin_a, end_a) = a;
     let (begin_b, end_b) = b;
     if begin_a <= begin_b && end_a >= begin_b {
@@ -18,11 +26,13 @@ where N: PartialOrd {
     if begin_b <= begin_a && end_b >= begin_a {
         return true;
     }
-    return false;
+    false
 }
 
-fn stitch_ranges<N>(ranges: &Vec<(N, N)>, add: &(N, N)) -> Vec<(N, N)>
-where N: Ord + Copy {
+fn stitch_ranges<N>(ranges: &[(N, N)], add: &(N, N)) -> Vec<(N, N)>
+where
+    N: Ord + Copy,
+{
     let mut new_range = (add.0, add.1);
     let mut new = ranges.iter().fold(Vec::new(), |mut new_ranges, range| {
         if !is_range_overlap(range, &new_range) {
@@ -37,7 +47,11 @@ where N: Ord + Copy {
     new
 }
 
-fn get_searched_ranges_for_y(data: &Vec<(file::Position<i32>, file::Position<i32>)>, y: i32, max_coord: Option<i32>) -> Vec<(i32, i32)> {
+fn get_searched_ranges_for_y(
+    data: &[(file::Position<i32>, file::Position<i32>)],
+    y: i32,
+    max_coord: Option<i32>,
+) -> Vec<(i32, i32)> {
     let mut short_circuit = false;
     data.iter().fold(Vec::new(), |ranges, sensor_data| {
         if short_circuit {
@@ -68,15 +82,18 @@ fn get_searched_ranges_for_y(data: &Vec<(file::Position<i32>, file::Position<i32
     })
 }
 
-fn find_frequency(data: &Vec<(file::Position<i32>, file::Position<i32>)>, max_coord: i32) -> Option<u64> {
-    for y in 0..max_coord+1 {
+fn find_frequency(
+    data: &[(file::Position<i32>, file::Position<i32>)],
+    max_coord: i32,
+) -> Option<u64> {
+    for y in 0..max_coord + 1 {
         let mut ranges = get_searched_ranges_for_y(data, y, Some(max_coord));
         if ranges.len() == 2 {
-            ranges.sort_by(|a, b| a.0.cmp(&b.0));
+            ranges.sort_by_key(|a| a.0);
             return Some((ranges[0].1 as u64 + 1) * 4000000 + y as u64);
         }
     }
-    return None;
+    None
 }
 
 pub fn task1(path: &str, row: i32) {
@@ -84,11 +101,17 @@ pub fn task1(path: &str, row: i32) {
         let sensor_data = file::to_sensor_data::<i32>(lines);
         debug!("Found {} sensors", sensor_data.len());
         let ranges = get_searched_ranges_for_y(&sensor_data, row, None);
-        debug!("Row {} has been searched in the following ranges: {:?}", row, ranges);
-        let searched_positions = ranges.iter().fold(0, |sum, range| {
-            sum + (range.1 - range.0)
-        });
-        info!("Row {} has {} positions that cannot contain a beacon", row, searched_positions);
+        debug!(
+            "Row {} has been searched in the following ranges: {:?}",
+            row, ranges
+        );
+        let searched_positions = ranges
+            .iter()
+            .fold(0, |sum, range| sum + (range.1 - range.0));
+        info!(
+            "Row {} has {} positions that cannot contain a beacon",
+            row, searched_positions
+        );
     }
 }
 

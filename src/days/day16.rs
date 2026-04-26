@@ -1,8 +1,12 @@
-use std::collections::{HashMap, HashSet, VecDeque};
 use crate::utils::file;
 use log::{debug, info};
+use std::collections::{HashMap, HashSet, VecDeque};
 
-fn find_shortest_path(valves: &HashMap<String, (u32, Vec<String>)>, start: &String, end: &String) -> Vec<String> {
+fn find_shortest_path(
+    valves: &HashMap<String, (u32, Vec<String>)>,
+    start: &String,
+    end: &String,
+) -> Vec<String> {
     if start.eq(end) {
         return vec![start.clone()];
     }
@@ -33,7 +37,9 @@ fn find_shortest_path(valves: &HashMap<String, (u32, Vec<String>)>, start: &Stri
     vec![]
 }
 
-fn get_distances(valves: &HashMap<String, (u32, Vec<String>)>) -> HashMap<String, HashMap<String, u32>> {
+fn get_distances(
+    valves: &HashMap<String, (u32, Vec<String>)>,
+) -> HashMap<String, HashMap<String, u32>> {
     let names = valves.iter().fold(Vec::new(), |mut names, valve| {
         let (name, _) = valve;
         names.push(name.clone());
@@ -62,20 +68,29 @@ fn get_unopened(valves: &HashMap<String, (u32, Vec<String>)>) -> Vec<String> {
     })
 }
 
-fn compute_all_flows(valves: &HashMap<String, (u32, Vec<String>)>, unopened: &Vec<String>, path: &Vec<String>, distances: &HashMap<String, HashMap<String, u32>>, time_left: u32, flow: u32) -> Vec<(Vec<String>, u32)> {
+fn compute_all_flows(
+    valves: &HashMap<String, (u32, Vec<String>)>,
+    unopened: &[String],
+    path: &[String],
+    distances: &HashMap<String, HashMap<String, u32>>,
+    time_left: u32,
+    flow: u32,
+) -> Vec<(Vec<String>, u32)> {
     let mut flows = Vec::new();
-    flows.push((path.clone(), flow));
+    flows.push((path.to_vec(), flow));
     if let Some(last) = path.last() {
         if let Some(last_connections) = distances.get(last) {
             for valve in unopened.iter() {
-                if let (Some(valve_distance), Some(valve_data)) = (last_connections.get(valve), valves.get(valve)) {
+                if let (Some(valve_distance), Some(valve_data)) =
+                    (last_connections.get(valve), valves.get(valve))
+                {
                     let new_time_left = time_left as i32 - *valve_distance as i32;
                     if new_time_left <= 0 {
                         continue;
                     }
                     let (flow_rate, _) = valve_data;
                     let new_flow = flow + new_time_left as u32 * *flow_rate;
-                    let mut new_path = path.clone();
+                    let mut new_path = path.to_vec();
                     new_path.push(valve.clone());
                     let new_unopened = unopened.iter().fold(Vec::new(), |mut unopened, v| {
                         if !v.eq(valve) {
@@ -83,7 +98,14 @@ fn compute_all_flows(valves: &HashMap<String, (u32, Vec<String>)>, unopened: &Ve
                         }
                         unopened
                     });
-                    let new_flows = compute_all_flows(valves, &new_unopened, &new_path, distances, new_time_left as u32, new_flow);
+                    let new_flows = compute_all_flows(
+                        valves,
+                        &new_unopened,
+                        &new_path,
+                        distances,
+                        new_time_left as u32,
+                        new_flow,
+                    );
                     for flow in new_flows.iter() {
                         flows.push(flow.clone());
                     }
@@ -94,7 +116,7 @@ fn compute_all_flows(valves: &HashMap<String, (u32, Vec<String>)>, unopened: &Ve
     flows
 }
 
-fn find_best_parallel_solutions(solutions: &Vec<(Vec<String>, u32)>, start: &String) -> u32 {
+fn find_best_parallel_solutions(solutions: &[(Vec<String>, u32)], start: &str) -> u32 {
     let mut max_flow = u32::MIN;
     for a in 0..solutions.len() {
         if let Some(a_item) = solutions.get(a) {
@@ -131,7 +153,14 @@ pub fn task1(path: &str, minutes: u32) {
         let distances = get_distances(&valves);
         let unopened = get_unopened(&valves);
         debug!("Found {} unopened valves", unopened.len());
-        let all_flows = compute_all_flows(&valves, &unopened, &vec![String::from("AA")], &distances, minutes, 0);
+        let all_flows = compute_all_flows(
+            &valves,
+            &unopened,
+            &[String::from("AA")],
+            &distances,
+            minutes,
+            0,
+        );
         debug!("Found {} possible solutions", all_flows.len());
         let max_flow = all_flows.iter().fold(0, |max, result| {
             let (_, flow) = result;
@@ -152,9 +181,19 @@ pub fn task2(path: &str, minutes: u32) {
         let distances = get_distances(&valves);
         let unopened = get_unopened(&valves);
         debug!("Found {} unopened valves", unopened.len());
-        let all_flows = compute_all_flows(&valves, &unopened, &vec![String::from("AA")], &distances, minutes, 0);
+        let all_flows = compute_all_flows(
+            &valves,
+            &unopened,
+            &[String::from("AA")],
+            &distances,
+            minutes,
+            0,
+        );
         debug!("Found {} possible solutions", all_flows.len());
         let best_flow = find_best_parallel_solutions(&all_flows, &String::from("AA"));
-        info!("Released {} pressure in {} minutes when working with 1 elephant", best_flow, minutes);
-    } 
+        info!(
+            "Released {} pressure in {} minutes when working with 1 elephant",
+            best_flow, minutes
+        );
+    }
 }

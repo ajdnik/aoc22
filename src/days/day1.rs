@@ -1,7 +1,4 @@
-use crate::utils::{
-    file,
-    vec,
-};
+use crate::utils::{file, vec};
 use log::{debug, info};
 
 pub fn task1(path: &str) {
@@ -21,10 +18,9 @@ pub fn task2(path: &str) {
         debug!("Found {} calorie counts in the list", numbers.len());
         let mut counts = vec::sum_continuous_numbers(numbers);
         debug!("The calorie counts belong to {} elves", counts.len());
-        
+
         counts.sort_by(|a, b| b.cmp(a));
         let top3 = counts[0] + counts[1] + counts[2];
         info!("The top 3 calorie counts sum up to {}", top3);
     }
-    
 }
