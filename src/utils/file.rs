@@ -10,6 +10,7 @@ mod ranges;
 mod sensors;
 mod signals;
 mod valves;
+mod voxels;
 mod walls;
 
 pub use cpu::{to_commands, CPUCommand};
@@ -24,4 +25,5 @@ pub use ranges::to_range_tuple;
 pub use sensors::to_sensor_data;
 pub use signals::{to_signals, Signal};
 pub use valves::to_valves;
+pub use voxels::to_voxels;
 pub use walls::to_walls;

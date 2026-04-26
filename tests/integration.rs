@@ -219,3 +219,13 @@ fn day17() {
         "Tower height after 1000000000000 rocks is 1514285714288",
     );
 }
+
+#[test]
+fn day18() {
+    let input = read("input/day18/test.txt");
+    assert_contains(&day18::part1(&input).unwrap(), "Total surface area is 64");
+    assert_contains(
+        &day18::part2(&input).unwrap(),
+        "Exterior surface area is 58",
+    );
+}
