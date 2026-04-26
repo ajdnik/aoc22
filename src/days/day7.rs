@@ -1,38 +1,39 @@
 use crate::utils::file;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use num::Num;
+use std::collections::HashMap;
 use std::ops::AddAssign;
 
-fn directory_size<N>(working_directory: &str, filesystem: &[(file::FilesystemType, String, N)]) -> N
+fn directory_sizes<N>(filesystem: &[(file::FilesystemType, String, N)]) -> HashMap<String, N>
 where
     N: AddAssign + Num + Copy,
 {
-    filesystem
+    let mut sizes: HashMap<String, N> = filesystem
         .iter()
-        .fold(N::zero(), |mut sum, (item_type, path, size)| {
-            if path.starts_with(working_directory) && path != working_directory {
-                if let file::FilesystemType::File = item_type {
-                    sum += *size;
-                }
-            }
-            sum
-        })
+        .filter(|(kind, _, _)| matches!(kind, file::FilesystemType::Dir))
+        .map(|(_, path, _)| (path.clone(), N::zero()))
+        .collect();
+    for (kind, path, size) in filesystem {
+        if !matches!(kind, file::FilesystemType::File) {
+            continue;
+        }
+        for (idx, _) in path.match_indices('/') {
+            let prefix = &path[..=idx];
+            sizes
+                .entry(prefix.to_string())
+                .and_modify(|s| *s += *size)
+                .or_insert(*size);
+        }
+    }
+    sizes
 }
 
 pub fn part1(input: &str) -> Result<String> {
     let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input))?;
     let threshold = 100000;
-    let sum: u32 = filesystem
-        .iter()
-        .filter_map(|(item_type, path, _)| {
-            if let file::FilesystemType::Dir = item_type {
-                let size = directory_size(path, &filesystem);
-                if size <= threshold {
-                    return Some(size);
-                }
-            }
-            None
-        })
+    let sum: u32 = directory_sizes(&filesystem)
+        .values()
+        .filter(|&&s| s <= threshold)
         .sum();
     Ok(format!(
         "The size sum of all directories whose size is under {} is {}",
@@ -42,19 +43,15 @@ pub fn part1(input: &str) -> Result<String> {
 
 pub fn part2(input: &str) -> Result<String> {
     let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input))?;
-    let used_space = directory_size(&filesystem[0].1, &filesystem);
-    let free_space = 70000000 - used_space;
-    let need_to_free = 30000000 - free_space;
-    let freed_up = filesystem
-        .iter()
-        .fold(used_space, |mut min_size, (item_type, path, _)| {
-            if let file::FilesystemType::Dir = item_type {
-                let size = directory_size(path, &filesystem);
-                if size >= need_to_free && min_size > size {
-                    min_size = size;
-                }
-            }
-            min_size
-        });
+    let sizes = directory_sizes(&filesystem);
+    let root = &filesystem.first().context("filesystem is empty")?.1;
+    let used = *sizes.get(root).context("root size not computed")?;
+    let need_to_free = 30000000 - (70000000 - used);
+    let freed_up = sizes
+        .values()
+        .copied()
+        .filter(|&s| s >= need_to_free)
+        .min()
+        .context("no directory large enough to free required space")?;
     Ok(format!("Freed up {} to prepare for update", freed_up))
 }
