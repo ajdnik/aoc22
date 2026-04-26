@@ -279,3 +279,16 @@ fn day23() {
         "First round with no movement: 20",
     );
 }
+
+#[test]
+fn day24() {
+    let input = read("input/day24/test.txt");
+    assert_contains(
+        &day24::part1(&input).unwrap(),
+        "Fastest path to goal takes 18 minutes",
+    );
+    assert_contains(
+        &day24::part2(&input).unwrap(),
+        "Round trip with snack takes 54 minutes",
+    );
+}
