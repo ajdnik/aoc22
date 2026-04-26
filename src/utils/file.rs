@@ -1,3 +1,4 @@
+mod blueprints;
 mod cpu;
 mod elevation;
 mod filesystem;
@@ -13,6 +14,7 @@ mod valves;
 mod voxels;
 mod walls;
 
+pub use blueprints::{to_blueprints, Blueprint};
 pub use cpu::{to_commands, CPUCommand};
 pub use elevation::to_elevation_map;
 pub use filesystem::{parse_filesystem, FilesystemType};

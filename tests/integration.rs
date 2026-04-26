@@ -229,3 +229,16 @@ fn day18() {
         "Exterior surface area is 58",
     );
 }
+
+#[test]
+fn day19() {
+    let input = read("input/day19/test.txt");
+    assert_contains(
+        &day19::part1(&input).unwrap(),
+        "Sum of quality levels is 33",
+    );
+    assert_contains(
+        &day19::part2(&input).unwrap(),
+        "Product of geodes from first 3 blueprints is 3472",
+    );
+}
