@@ -266,3 +266,16 @@ fn day22() {
     assert_contains(&day22::part1(&input).unwrap(), "Final password is 6032");
     assert_contains(&day22::part2(&input).unwrap(), "Final password is 5031");
 }
+
+#[test]
+fn day23() {
+    let input = read("input/day23/test.txt");
+    assert_contains(
+        &day23::part1(&input).unwrap(),
+        "Empty tiles in bounding rectangle: 110",
+    );
+    assert_contains(
+        &day23::part2(&input).unwrap(),
+        "First round with no movement: 20",
+    );
+}
