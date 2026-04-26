@@ -1,4 +1,4 @@
-use log::error;
+use anyhow::{anyhow, bail, Context, Result};
 use num::Num;
 use std::{collections::HashMap, ops::Range, str::FromStr};
 
@@ -6,6 +6,8 @@ pub fn lines_of(input: &str) -> impl Iterator<Item = String> + '_ {
     input.lines().map(String::from)
 }
 
+/// Parses each line as `N`, mapping blank/unparsable lines to `None`.
+/// Used by callers that treat blank lines as group separators.
 pub fn lines_to_numbers<N, I>(lines: I) -> Vec<Option<N>>
 where
     N: FromStr,
@@ -31,22 +33,38 @@ where
     groups
 }
 
-pub fn to_range_touple<N, I>(lines: I) -> Vec<(Range<N>, Range<N>)>
+pub fn to_range_touple<N, I>(lines: I) -> Result<Vec<(Range<N>, Range<N>)>>
 where
     N: FromStr + Copy,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     lines
         .into_iter()
-        .filter_map(|line| {
+        .filter(|l| !l.is_empty())
+        .map(|line| {
             let ranges: Vec<&str> = line.split(',').collect();
+            if ranges.len() != 2 {
+                bail!("expected 2 ranges in line {:?}", line);
+            }
             let first: Vec<&str> = ranges[0].split('-').collect();
             let second: Vec<&str> = ranges[1].split('-').collect();
-            let a = first[0].parse::<N>().ok()?;
-            let b = first[1].parse::<N>().ok()?;
-            let c = second[0].parse::<N>().ok()?;
-            let d = second[1].parse::<N>().ok()?;
-            Some((a..b, c..d))
+            if first.len() != 2 || second.len() != 2 {
+                bail!("malformed range in line {:?}", line);
+            }
+            let a: N = first[0]
+                .parse()
+                .with_context(|| format!("parsing {:?}", first[0]))?;
+            let b: N = first[1]
+                .parse()
+                .with_context(|| format!("parsing {:?}", first[1]))?;
+            let c: N = second[0]
+                .parse()
+                .with_context(|| format!("parsing {:?}", second[0]))?;
+            let d: N = second[1]
+                .parse()
+                .with_context(|| format!("parsing {:?}", second[1]))?;
+            Ok((a..b, c..d))
         })
         .collect()
 }
@@ -57,9 +75,10 @@ pub enum FilesystemType {
     File,
 }
 
-pub fn parse_filesystem<N, I>(std_output: I) -> Vec<(FilesystemType, String, N)>
+pub fn parse_filesystem<N, I>(std_output: I) -> Result<Vec<(FilesystemType, String, N)>>
 where
     N: FromStr + Num,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     let mut is_ls = false;
@@ -78,13 +97,17 @@ where
         } else if !line.starts_with('$') && is_ls {
             if !line.starts_with("dir") {
                 let stats: Vec<&str> = line.split(' ').collect();
-                if let Ok(size) = stats[0].parse::<N>() {
-                    filesystem.push((
-                        FilesystemType::File,
-                        working_directory.clone() + stats[1],
-                        size,
-                    ));
+                if stats.len() < 2 {
+                    bail!("malformed ls entry {:?}", line);
                 }
+                let size: N = stats[0]
+                    .parse()
+                    .with_context(|| format!("parsing file size {:?}", stats[0]))?;
+                filesystem.push((
+                    FilesystemType::File,
+                    working_directory.clone() + stats[1],
+                    size,
+                ));
             }
         } else if line.starts_with("$ cd") {
             is_ls = false;
@@ -98,20 +121,26 @@ where
             filesystem.push((FilesystemType::Dir, working_directory.clone(), N::zero()));
         }
     }
-    filesystem
+    Ok(filesystem)
 }
 
-pub fn to_matrix<N, I>(lines: I) -> Vec<Vec<N>>
+pub fn to_matrix<N, I>(lines: I) -> Result<Vec<Vec<N>>>
 where
     N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     lines
         .into_iter()
+        .filter(|l| !l.is_empty())
         .map(|line| {
             line.chars()
-                .filter_map(|chr| chr.to_string().parse::<N>().ok())
-                .collect()
+                .map(|chr| {
+                    let s = chr.to_string();
+                    s.parse::<N>()
+                        .with_context(|| format!("parsing digit {:?}", s))
+                })
+                .collect::<Result<Vec<_>>>()
         })
         .collect()
 }
@@ -124,31 +153,34 @@ pub enum Direction {
     Right,
 }
 
-pub fn to_movements<I>(lines: I) -> Vec<Direction>
+pub fn to_movements<I>(lines: I) -> Result<Vec<Direction>>
 where
     I: IntoIterator<Item = String>,
 {
     let mut movements = Vec::new();
     for line in lines {
-        let (direction, length) = line.split_at(2);
-        let Ok(val) = length.parse::<usize>() else {
+        if line.is_empty() {
             continue;
-        };
+        }
+        if line.len() < 3 {
+            bail!("malformed movement line {:?}", line);
+        }
+        let (direction, length) = line.split_at(2);
+        let val: usize = length
+            .parse()
+            .with_context(|| format!("parsing movement length {:?}", length))?;
         let dir = match direction {
             "U " => Direction::Up,
             "D " => Direction::Down,
             "L " => Direction::Left,
             "R " => Direction::Right,
-            _ => {
-                error!("Unknown direction {}", direction);
-                continue;
-            }
+            _ => bail!("unknown direction {:?}", direction),
         };
         for _ in 0..val {
             movements.push(dir);
         }
     }
-    movements
+    Ok(movements)
 }
 
 pub enum CPUCommand {
@@ -156,30 +188,36 @@ pub enum CPUCommand {
     Noop,
 }
 
-pub fn to_commands<N, I>(input: I) -> Vec<(CPUCommand, N)>
+pub fn to_commands<N, I>(input: I) -> Result<Vec<(CPUCommand, N)>>
 where
     N: FromStr + Num,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     let mut commands = Vec::new();
     for line in input {
+        if line.is_empty() {
+            continue;
+        }
         if line.starts_with("noop") {
             commands.push((CPUCommand::Noop, N::zero()));
-        } else {
+        } else if line.starts_with("addx ") {
             let (_, num) = line.split_at(5);
-            if let Ok(val) = num.parse::<N>() {
-                commands.push((CPUCommand::Addx, val));
-            }
+            let val: N = num
+                .parse()
+                .with_context(|| format!("parsing addx operand {:?}", num))?;
+            commands.push((CPUCommand::Addx, val));
+        } else {
+            bail!("unknown CPU command {:?}", line);
         }
     }
-    commands
+    Ok(commands)
 }
 
 pub enum Operation<N> {
     Add(N),
     Multiply(N),
     Pow2,
-    Unknown,
 }
 
 pub struct Monkey<N, T> {
@@ -190,70 +228,117 @@ pub struct Monkey<N, T> {
     pub test_false: T,
 }
 
-pub fn to_monkeys<N, T, I>(input: I) -> Vec<Monkey<N, T>>
+pub fn to_monkeys<N, T, I>(input: I) -> Result<Vec<Monkey<N, T>>>
 where
     N: FromStr + Num,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     T: FromStr + Num,
+    <T as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
-    let mut monkeys: Vec<Monkey<N, T>> = Vec::new();
-    for line in input {
-        if line.starts_with("Monkey") {
-            monkeys.push(Monkey {
+    struct Builder<N, T> {
+        items: Vec<N>,
+        op: Option<Operation<N>>,
+        test_divisible: Option<N>,
+        test_true: Option<T>,
+        test_false: Option<T>,
+    }
+    impl<N, T> Builder<N, T> {
+        fn new() -> Self {
+            Self {
                 items: Vec::new(),
-                op: Operation::Unknown,
-                test_divisible: N::zero(),
-                test_true: T::zero(),
-                test_false: T::zero(),
-            });
-        } else if line.starts_with("  Starting items:") {
-            let (_, nums) = line.split_at(18);
-            let last_monkey = monkeys.last_mut().unwrap();
-            for item in nums.split(", ") {
-                if let Ok(val) = item.parse::<N>() {
-                    last_monkey.items.push(val);
-                }
-            }
-        } else if line.starts_with("  Operation:") {
-            let (_, calc) = line.split_at(19);
-            let calc_parts: Vec<&str> = calc.split(' ').collect();
-            let last_monkey = monkeys.last_mut().unwrap();
-            match calc_parts[1] {
-                "+" => {
-                    if let Ok(val) = calc_parts[2].parse::<N>() {
-                        last_monkey.op = Operation::Add(val);
-                    }
-                }
-                "*" => {
-                    if calc_parts[2] == "old" {
-                        last_monkey.op = Operation::Pow2;
-                    } else if let Ok(val) = calc_parts[2].parse::<N>() {
-                        last_monkey.op = Operation::Multiply(val);
-                    }
-                }
-                _ => error!("Unsupported operation {}", calc),
-            }
-        } else if line.starts_with("  Test:") {
-            let (_, divisible) = line.split_at(21);
-            let last_monkey = monkeys.last_mut().unwrap();
-            if let Ok(val) = divisible.parse::<N>() {
-                last_monkey.test_divisible = val;
-            }
-        } else if line.starts_with("    If true:") {
-            let (_, monkey) = line.split_at(29);
-            let last_monkey = monkeys.last_mut().unwrap();
-            if let Ok(val) = monkey.parse::<T>() {
-                last_monkey.test_true = val;
-            }
-        } else if line.starts_with("    If false:") {
-            let (_, monkey) = line.split_at(30);
-            let last_monkey = monkeys.last_mut().unwrap();
-            if let Ok(val) = monkey.parse::<T>() {
-                last_monkey.test_false = val;
+                op: None,
+                test_divisible: None,
+                test_true: None,
+                test_false: None,
             }
         }
+        fn finish(self, idx: usize) -> Result<Monkey<N, T>> {
+            Ok(Monkey {
+                items: self.items,
+                op: self
+                    .op
+                    .ok_or_else(|| anyhow!("monkey {} missing op", idx))?,
+                test_divisible: self
+                    .test_divisible
+                    .ok_or_else(|| anyhow!("monkey {} missing test divisor", idx))?,
+                test_true: self
+                    .test_true
+                    .ok_or_else(|| anyhow!("monkey {} missing test_true", idx))?,
+                test_false: self
+                    .test_false
+                    .ok_or_else(|| anyhow!("monkey {} missing test_false", idx))?,
+            })
+        }
     }
-    monkeys
+
+    let mut monkeys: Vec<Monkey<N, T>> = Vec::new();
+    let mut current: Option<Builder<N, T>> = None;
+    for line in input {
+        if line.starts_with("Monkey") {
+            if let Some(b) = current.take() {
+                monkeys.push(b.finish(monkeys.len())?);
+            }
+            current = Some(Builder::new());
+        } else if let Some(stripped) = line.strip_prefix("  Starting items: ") {
+            let b = current
+                .as_mut()
+                .context("'Starting items' before Monkey header")?;
+            for item in stripped.split(", ") {
+                b.items.push(
+                    item.parse()
+                        .with_context(|| format!("parsing monkey item {:?}", item))?,
+                );
+            }
+        } else if let Some(stripped) = line.strip_prefix("  Operation: new = old ") {
+            let b = current
+                .as_mut()
+                .context("'Operation' before Monkey header")?;
+            let parts: Vec<&str> = stripped.split(' ').collect();
+            if parts.len() != 2 {
+                bail!("malformed operation {:?}", stripped);
+            }
+            b.op = Some(match (parts[0], parts[1]) {
+                ("+", val) => Operation::Add(
+                    val.parse()
+                        .with_context(|| format!("parsing operand {:?}", val))?,
+                ),
+                ("*", "old") => Operation::Pow2,
+                ("*", val) => Operation::Multiply(
+                    val.parse()
+                        .with_context(|| format!("parsing operand {:?}", val))?,
+                ),
+                _ => bail!("unsupported operation {:?}", stripped),
+            });
+        } else if let Some(stripped) = line.strip_prefix("  Test: divisible by ") {
+            let b = current.as_mut().context("'Test' before Monkey header")?;
+            b.test_divisible = Some(
+                stripped
+                    .parse()
+                    .with_context(|| format!("parsing test divisor {:?}", stripped))?,
+            );
+        } else if let Some(stripped) = line.strip_prefix("    If true: throw to monkey ") {
+            let b = current.as_mut().context("'If true' before Monkey header")?;
+            b.test_true = Some(
+                stripped
+                    .parse()
+                    .with_context(|| format!("parsing test_true {:?}", stripped))?,
+            );
+        } else if let Some(stripped) = line.strip_prefix("    If false: throw to monkey ") {
+            let b = current
+                .as_mut()
+                .context("'If false' before Monkey header")?;
+            b.test_false = Some(
+                stripped
+                    .parse()
+                    .with_context(|| format!("parsing test_false {:?}", stripped))?,
+            );
+        }
+    }
+    if let Some(b) = current.take() {
+        monkeys.push(b.finish(monkeys.len())?);
+    }
+    Ok(monkeys)
 }
 
 #[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
@@ -296,9 +381,10 @@ pub enum SignalParts<N> {
     Number(N),
 }
 
-pub fn to_signals<N, I>(lines: I) -> Vec<Vec<SignalParts<N>>>
+pub fn to_signals<N, I>(lines: I) -> Result<Vec<Vec<SignalParts<N>>>>
 where
     N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     let mut signals = Vec::new();
@@ -313,18 +399,20 @@ where
                 '[' => signal.push(SignalParts::Start),
                 ']' => {
                     if !num_buffer.is_empty() {
-                        if let Ok(val) = num_buffer.parse::<N>() {
-                            signal.push(SignalParts::Number(val));
-                        }
+                        let val: N = num_buffer
+                            .parse()
+                            .with_context(|| format!("parsing signal number {:?}", num_buffer))?;
+                        signal.push(SignalParts::Number(val));
                         num_buffer.clear();
                     }
                     signal.push(SignalParts::End);
                 }
                 ',' => {
                     if !num_buffer.is_empty() {
-                        if let Ok(val) = num_buffer.parse::<N>() {
-                            signal.push(SignalParts::Number(val));
-                        }
+                        let val: N = num_buffer
+                            .parse()
+                            .with_context(|| format!("parsing signal number {:?}", num_buffer))?;
+                        signal.push(SignalParts::Number(val));
                         num_buffer.clear();
                     }
                     signal.push(SignalParts::Next);
@@ -334,47 +422,75 @@ where
         }
         signals.push(signal);
     }
-    signals
+    Ok(signals)
 }
 
-pub fn to_walls<N, I>(lines: I) -> Vec<Vec<Position<N>>>
+pub fn to_walls<N, I>(lines: I) -> Result<Vec<Vec<Position<N>>>>
 where
     N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     lines
         .into_iter()
+        .filter(|l| !l.is_empty())
         .map(|line| {
             line.split(" -> ")
-                .filter_map(|point| {
+                .map(|point| {
                     let dim: Vec<&str> = point.split(',').collect();
-                    let x = dim[0].parse::<N>().ok()?;
-                    let y = dim[1].parse::<N>().ok()?;
-                    Some(Position { x, y })
+                    if dim.len() != 2 {
+                        bail!("malformed point {:?}", point);
+                    }
+                    let x: N = dim[0]
+                        .parse()
+                        .with_context(|| format!("parsing x {:?}", dim[0]))?;
+                    let y: N = dim[1]
+                        .parse()
+                        .with_context(|| format!("parsing y {:?}", dim[1]))?;
+                    Ok(Position { x, y })
                 })
-                .collect()
+                .collect::<Result<Vec<_>>>()
         })
         .collect()
 }
 
-pub fn to_sensor_data<N, I>(lines: I) -> Vec<(Position<N>, Position<N>)>
+pub fn to_sensor_data<N, I>(lines: I) -> Result<Vec<(Position<N>, Position<N>)>>
 where
     N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     lines
         .into_iter()
-        .filter_map(|line| {
+        .filter(|l| !l.is_empty())
+        .map(|line| {
             let parts: Vec<&str> = line.split(':').collect();
+            if parts.len() != 2 {
+                bail!("malformed sensor line {:?}", line);
+            }
+            if parts[0].len() < 10 || parts[1].len() < 22 {
+                bail!("sensor line too short {:?}", line);
+            }
             let (_, sensor_loc) = parts[0].split_at(10);
             let (_, beacon_loc) = parts[1].split_at(22);
             let sp: Vec<&str> = sensor_loc.split(", ").collect();
             let bp: Vec<&str> = beacon_loc.split(", ").collect();
-            let sensor_x = sp[0][2..].parse::<N>().ok()?;
-            let sensor_y = sp[1][2..].parse::<N>().ok()?;
-            let beacon_x = bp[0][2..].parse::<N>().ok()?;
-            let beacon_y = bp[1][2..].parse::<N>().ok()?;
-            Some((
+            if sp.len() != 2 || bp.len() != 2 {
+                bail!("malformed sensor coordinates {:?}", line);
+            }
+            let sensor_x: N = sp[0][2..]
+                .parse()
+                .with_context(|| format!("sensor x {:?}", &sp[0][2..]))?;
+            let sensor_y: N = sp[1][2..]
+                .parse()
+                .with_context(|| format!("sensor y {:?}", &sp[1][2..]))?;
+            let beacon_x: N = bp[0][2..]
+                .parse()
+                .with_context(|| format!("beacon x {:?}", &bp[0][2..]))?;
+            let beacon_y: N = bp[1][2..]
+                .parse()
+                .with_context(|| format!("beacon y {:?}", &bp[1][2..]))?;
+            Ok((
                 Position {
                     x: sensor_x,
                     y: sensor_y,
@@ -388,26 +504,40 @@ where
         .collect()
 }
 
-pub fn to_valves<N, I>(lines: I) -> HashMap<String, (N, Vec<String>)>
+pub fn to_valves<N, I>(lines: I) -> Result<HashMap<String, (N, Vec<String>)>>
 where
     N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     let mut valves = HashMap::new();
     for line in lines {
+        if line.is_empty() {
+            continue;
+        }
         let parts: Vec<&str> = line.split("; ").collect();
+        if parts.len() != 2 {
+            bail!("malformed valve line {:?}", line);
+        }
         let first_parts: Vec<&str> = parts[0].split(' ').collect();
+        if first_parts.len() < 5 || first_parts[4].len() < 5 {
+            bail!("malformed valve header {:?}", line);
+        }
         let (_, rate_str) = first_parts[4].split_at(5);
         let offset = if parts[1].starts_with("tunnels") {
             23
         } else {
             22
         };
+        if parts[1].len() < offset {
+            bail!("malformed valve tunnels {:?}", line);
+        }
         let (_, second_parts) = parts[1].split_at(offset);
         let other_valves: Vec<String> = second_parts.split(", ").map(String::from).collect();
-        if let Ok(rate) = rate_str.parse::<N>() {
-            valves.insert(first_parts[1].to_string(), (rate, other_valves));
-        }
+        let rate: N = rate_str
+            .parse()
+            .with_context(|| format!("parsing valve rate {:?}", rate_str))?;
+        valves.insert(first_parts[1].to_string(), (rate, other_valves));
     }
-    valves
+    Ok(valves)
 }

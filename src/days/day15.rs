@@ -97,7 +97,7 @@ fn find_frequency(
 }
 
 pub fn part1(input: &str, row: i32) -> Result<String> {
-    let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input));
+    let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input))?;
     let ranges = get_searched_ranges_for_y(&sensor_data, row, None);
     let searched: i32 = ranges
         .iter()
@@ -109,7 +109,7 @@ pub fn part1(input: &str, row: i32) -> Result<String> {
 }
 
 pub fn part2(input: &str, max: i32) -> Result<String> {
-    let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input));
+    let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input))?;
     let freq = find_frequency(&sensor_data, max);
     Ok(match freq {
         Some(val) => format!("Tuning frequency of the missing beacon is {}", val),

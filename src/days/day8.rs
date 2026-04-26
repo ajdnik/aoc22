@@ -59,7 +59,7 @@ fn calc_cover(x: usize, y: usize, matrix: &[Vec<u8>]) -> usize {
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let forest = file::to_matrix::<u8, _>(file::lines_of(input));
+    let forest = file::to_matrix::<u8, _>(file::lines_of(input))?;
     ensure!(!forest.is_empty(), "empty forest");
     let visible_top_left = vec::matrix_to_mask(&forest, is_visible);
     let reversed = vec::matrix_rotate180(&forest);
@@ -77,7 +77,7 @@ pub fn part1(input: &str) -> Result<String> {
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let forest = file::to_matrix::<u8, _>(file::lines_of(input));
+    let forest = file::to_matrix::<u8, _>(file::lines_of(input))?;
     ensure!(!forest.is_empty(), "empty forest");
     let cover_scores = vec::matrix_to_mask(&forest, calc_cover);
     let max_score = cover_scores

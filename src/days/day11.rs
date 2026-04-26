@@ -1,6 +1,5 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::error;
 use num::integer::{div_floor, lcm};
 
 fn find_lcm(values: &[u64]) -> u64 {
@@ -20,17 +19,12 @@ fn compute_monkey_business(
         for monkey_num in 0..monkeys.len() {
             for item_num in 0..items[monkey_num].len() {
                 inspect_count[monkey_num] += 1;
-                let mut new_item = 0;
-                match monkeys[monkey_num].op {
-                    file::Operation::Add(val) => {
-                        new_item = items[monkey_num][item_num].wrapping_add(val)
-                    }
-                    file::Operation::Multiply(val) => {
-                        new_item = items[monkey_num][item_num].wrapping_mul(val)
-                    }
-                    file::Operation::Pow2 => new_item = items[monkey_num][item_num].wrapping_pow(2),
-                    file::Operation::Unknown => error!("Unknown operation"),
-                }
+                let item = items[monkey_num][item_num];
+                let mut new_item = match monkeys[monkey_num].op {
+                    file::Operation::Add(val) => item.wrapping_add(val),
+                    file::Operation::Multiply(val) => item.wrapping_mul(val),
+                    file::Operation::Pow2 => item.wrapping_pow(2),
+                };
                 new_item %= lcm;
                 if let Some(val) = relief {
                     new_item = div_floor(new_item, val);
@@ -49,13 +43,13 @@ fn compute_monkey_business(
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input));
+    let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input))?;
     let monkey_business = compute_monkey_business(&monkeys, 20, Some(3));
     Ok(format!("Monkey business level is {}", monkey_business))
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input));
+    let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input))?;
     let monkey_business = compute_monkey_business(&monkeys, 10000, None);
     Ok(format!("Monkey business level is {}", monkey_business))
 }

@@ -126,7 +126,7 @@ fn best_parallel(best: &HashMap<u32, u32>) -> u32 {
 }
 
 pub fn part1(input: &str, minutes: u32) -> Result<String> {
-    let valves = file::to_valves::<u32, _>(file::lines_of(input));
+    let valves = file::to_valves::<u32, _>(file::lines_of(input))?;
     let best = best_per_mask(&valves, minutes)?;
     let max_flow = best.values().copied().max().unwrap_or(0);
     Ok(format!(
@@ -136,7 +136,7 @@ pub fn part1(input: &str, minutes: u32) -> Result<String> {
 }
 
 pub fn part2(input: &str, minutes: u32) -> Result<String> {
-    let valves = file::to_valves::<u32, _>(file::lines_of(input));
+    let valves = file::to_valves::<u32, _>(file::lines_of(input))?;
     let best = best_per_mask(&valves, minutes)?;
     let best_flow = best_parallel(&best);
     Ok(format!(

@@ -78,13 +78,13 @@ fn simulate_sand(walls: &[Vec<file::Position<u32>>], cave_floor: Option<u32>) ->
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let walls = file::to_walls::<u32, _>(file::lines_of(input));
+    let walls = file::to_walls::<u32, _>(file::lines_of(input))?;
     let total = simulate_sand(&walls, None);
     Ok(format!("The cave is filled with {} sand granules", total))
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let walls = file::to_walls::<u32, _>(file::lines_of(input));
+    let walls = file::to_walls::<u32, _>(file::lines_of(input))?;
     let lowest_point = find_lowest_point(&walls);
     let total = simulate_sand(&walls, Some(lowest_point + 2));
     Ok(format!("The cave is filled with {} sand granules", total))

@@ -110,7 +110,7 @@ fn is_in_right_order(
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let signals = file::to_signals::<u32, _>(file::lines_of(input));
+    let signals = file::to_signals::<u32, _>(file::lines_of(input))?;
     let mut sum = 0;
     for (idx, i) in (1..).zip((0..signals.len()).step_by(2)) {
         if Ordering::Greater != is_in_right_order(signals[i].clone(), signals[i + 1].clone()) {
@@ -121,7 +121,7 @@ pub fn part1(input: &str) -> Result<String> {
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let mut signals = file::to_signals::<u32, _>(file::lines_of(input));
+    let mut signals = file::to_signals::<u32, _>(file::lines_of(input))?;
     signals.push(vec![
         file::SignalParts::Start,
         file::SignalParts::Start,

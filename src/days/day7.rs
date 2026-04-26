@@ -20,7 +20,7 @@ where
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input));
+    let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input))?;
     let threshold = 100000;
     let sum: u32 = filesystem
         .iter()
@@ -41,7 +41,7 @@ pub fn part1(input: &str) -> Result<String> {
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input));
+    let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input))?;
     let used_space = directory_size(&filesystem[0].1, &filesystem);
     let free_space = 70000000 - used_space;
     let need_to_free = 30000000 - free_space;

@@ -1,10 +1,12 @@
 use crate::utils::file;
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
 use std::str::FromStr;
 
-fn parse_crates<N, I>(lines: I) -> (Vec<String>, Vec<(N, N, N)>)
+#[allow(clippy::type_complexity)]
+fn parse_crates<N, I>(lines: I) -> Result<(Vec<String>, Vec<(N, N, N)>)>
 where
     N: FromStr + Copy,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
     let mut stacks: Vec<String> = Vec::new();
@@ -21,7 +23,12 @@ where
                             stacks.push(String::new());
                         }
                     }
-                    stacks[column_idx].push(column.chars().nth(1).unwrap());
+                    stacks[column_idx].push(
+                        column
+                            .chars()
+                            .nth(1)
+                            .with_context(|| format!("malformed crate cell {:?}", column))?,
+                    );
                     column_idx += 1;
                     space_count = 0;
                 } else {
@@ -34,20 +41,22 @@ where
             }
         } else if line.starts_with("move") {
             let parts = line.split(' ').collect::<Vec<&str>>();
-            let mut numbers: Vec<N> = Vec::new();
-            if let Ok(num) = parts[1].parse::<N>() {
-                numbers.push(num);
+            if parts.len() < 6 {
+                bail!("malformed move line {:?}", line);
             }
-            if let Ok(num) = parts[3].parse::<N>() {
-                numbers.push(num);
-            }
-            if let Ok(num) = parts[5].parse::<N>() {
-                numbers.push(num);
-            }
-            operations.push((numbers[0], numbers[1], numbers[2]));
+            let a: N = parts[1]
+                .parse()
+                .with_context(|| format!("parsing move count {:?}", parts[1]))?;
+            let b: N = parts[3]
+                .parse()
+                .with_context(|| format!("parsing move from {:?}", parts[3]))?;
+            let c: N = parts[5]
+                .parse()
+                .with_context(|| format!("parsing move to {:?}", parts[5]))?;
+            operations.push((a, b, c));
         }
     }
-    (stacks, operations)
+    Ok((stacks, operations))
 }
 
 fn move_crates(
@@ -76,14 +85,14 @@ fn get_top_crates(stacks: &[String]) -> String {
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let (stacks, operations) = parse_crates(file::lines_of(input));
+    let (stacks, operations) = parse_crates(file::lines_of(input))?;
     let reordered = move_crates(stacks, operations, false);
     let top = get_top_crates(&reordered);
     Ok(format!("After reordering the top crates are {}", top))
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let (stacks, operations) = parse_crates(file::lines_of(input));
+    let (stacks, operations) = parse_crates(file::lines_of(input))?;
     let reordered = move_crates(stacks, operations, true);
     let top = get_top_crates(&reordered);
     Ok(format!("After reordering the top crates are {}", top))

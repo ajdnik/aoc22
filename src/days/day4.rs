@@ -2,7 +2,7 @@ use crate::utils::file;
 use anyhow::Result;
 
 pub fn part1(input: &str) -> Result<String> {
-    let pairs = file::to_range_touple::<i32, _>(file::lines_of(input));
+    let pairs = file::to_range_touple::<i32, _>(file::lines_of(input))?;
     let mut count = 0;
     for (first, second) in pairs.iter() {
         if (first.start <= second.start && first.end >= second.end)
@@ -15,7 +15,7 @@ pub fn part1(input: &str) -> Result<String> {
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let pairs = file::to_range_touple::<i32, _>(file::lines_of(input));
+    let pairs = file::to_range_touple::<i32, _>(file::lines_of(input))?;
     let mut count = 0;
     for (first, second) in pairs.iter() {
         if first.start <= second.end && second.start <= first.end {

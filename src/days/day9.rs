@@ -40,13 +40,13 @@ fn simulate(movements: &[file::Direction], rope_len: usize) -> usize {
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let movements = file::to_movements(file::lines_of(input));
+    let movements = file::to_movements(file::lines_of(input))?;
     let count = simulate(&movements, 2);
     Ok(format!("The tail visited {} places", count))
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let movements = file::to_movements(file::lines_of(input));
+    let movements = file::to_movements(file::lines_of(input))?;
     let count = simulate(&movements, 10);
     Ok(format!("The tail visited {} places", count))
 }

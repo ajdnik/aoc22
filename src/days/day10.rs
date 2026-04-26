@@ -44,7 +44,7 @@ fn to_crt(cycles: &[i32]) -> Vec<String> {
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let commands = file::to_commands::<i32, _>(file::lines_of(input));
+    let commands = file::to_commands::<i32, _>(file::lines_of(input))?;
     let cycles = simulate_cpu(&commands);
     let total = cycles[19] * 20
         + cycles[59] * 60
@@ -56,7 +56,7 @@ pub fn part1(input: &str) -> Result<String> {
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let commands = file::to_commands::<i32, _>(file::lines_of(input));
+    let commands = file::to_commands::<i32, _>(file::lines_of(input))?;
     let cycles = simulate_cpu(&commands);
     let crt = to_crt(&cycles);
     let mut out = String::from("CRT Output:");
