@@ -1,5 +1,4 @@
 use anyhow::{bail, Context, Result};
-use num::Num;
 use std::str::FromStr;
 
 pub enum CPUCommand {
@@ -9,7 +8,7 @@ pub enum CPUCommand {
 
 pub fn to_commands<N, I>(input: I) -> Result<Vec<(CPUCommand, N)>>
 where
-    N: FromStr + Num,
+    N: FromStr + Default,
     <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
@@ -19,7 +18,7 @@ where
             continue;
         }
         if line == "noop" {
-            commands.push((CPUCommand::Noop, N::zero()));
+            commands.push((CPUCommand::Noop, N::default()));
         } else if let Some(num) = line.strip_prefix("addx ") {
             let val: N = num
                 .parse()

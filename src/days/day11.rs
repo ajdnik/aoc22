@@ -1,6 +1,18 @@
 use crate::utils::file;
 use anyhow::Result;
-use num::integer::{div_floor, lcm};
+
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let t = b;
+        b = a % b;
+        a = t;
+    }
+    a
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a / gcd(a, b) * b
+}
 
 fn find_lcm(values: &[u64]) -> u64 {
     values.iter().fold(1, |prev, val| lcm(*val, prev))
@@ -27,7 +39,7 @@ fn compute_monkey_business(
                 };
                 new_item %= lcm;
                 if let Some(val) = relief {
-                    new_item = div_floor(new_item, val);
+                    new_item /= val;
                 }
                 if new_item.wrapping_rem(monkeys[monkey_num].test_divisible) == 0 {
                     items[monkeys[monkey_num].test_true].push(new_item);

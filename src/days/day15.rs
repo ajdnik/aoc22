@@ -1,17 +1,9 @@
 use crate::utils::file;
 use anyhow::Result;
-use num::{abs, Signed};
-use std::{
-    cmp::{max, min},
-    ops::Sub,
-};
+use std::cmp::{max, min};
 
-fn distance<N>(a: &file::Position<N>, b: &file::Position<N>) -> N
-where
-    N: Sub<Output = N> + Copy,
-    <N as Sub>::Output: Signed,
-{
-    abs(a.x - b.x) + abs(a.y - b.y)
+fn distance(a: &file::Position<i32>, b: &file::Position<i32>) -> i32 {
+    (a.x - b.x).abs() + (a.y - b.y).abs()
 }
 
 fn is_range_overlap<N>(a: &(N, N), b: &(N, N)) -> bool
@@ -58,7 +50,7 @@ fn get_searched_ranges_for_y(
             return ranges;
         }
         let (sensor, beacon) = sensor_data;
-        let y_dist = abs(sensor.y - y);
+        let y_dist = (sensor.y - y).abs();
         let max_dist = distance(sensor, beacon) - y_dist;
         if max_dist < 0 {
             return ranges;

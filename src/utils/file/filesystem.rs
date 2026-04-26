@@ -1,5 +1,4 @@
 use anyhow::{bail, Context, Result};
-use num::Num;
 use std::str::FromStr;
 
 #[derive(Clone, PartialEq)]
@@ -10,7 +9,7 @@ pub enum FilesystemType {
 
 pub fn parse_filesystem<N, I>(std_output: I) -> Result<Vec<(FilesystemType, String, N)>>
 where
-    N: FromStr + Num,
+    N: FromStr + Default,
     <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {
@@ -50,7 +49,7 @@ where
                 working_directory.push_str(dir_name);
                 working_directory.push('/');
             }
-            filesystem.push((FilesystemType::Dir, working_directory.clone(), N::zero()));
+            filesystem.push((FilesystemType::Dir, working_directory.clone(), N::default()));
         }
     }
     Ok(filesystem)

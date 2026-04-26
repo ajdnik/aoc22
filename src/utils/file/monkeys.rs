@@ -1,5 +1,4 @@
 use anyhow::{anyhow, bail, Context, Result};
-use num::Num;
 use std::str::FromStr;
 
 pub enum Operation<N> {
@@ -18,9 +17,9 @@ pub struct Monkey<N, T> {
 
 pub fn to_monkeys<N, T, I>(input: I) -> Result<Vec<Monkey<N, T>>>
 where
-    N: FromStr + Num,
+    N: FromStr,
     <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
-    T: FromStr + Num,
+    T: FromStr,
     <T as FromStr>::Err: std::error::Error + Send + Sync + 'static,
     I: IntoIterator<Item = String>,
 {

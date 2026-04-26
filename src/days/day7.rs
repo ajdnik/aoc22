@@ -1,17 +1,16 @@
 use crate::utils::file;
 use anyhow::{Context, Result};
-use num::Num;
 use std::collections::HashMap;
 use std::ops::AddAssign;
 
 fn directory_sizes<N>(filesystem: &[(file::FilesystemType, String, N)]) -> HashMap<String, N>
 where
-    N: AddAssign + Num + Copy,
+    N: AddAssign + Default + Copy,
 {
     let mut sizes: HashMap<String, N> = filesystem
         .iter()
         .filter(|(kind, _, _)| matches!(kind, file::FilesystemType::Dir))
-        .map(|(_, path, _)| (path.clone(), N::zero()))
+        .map(|(_, path, _)| (path.clone(), N::default()))
         .collect();
     for (kind, path, size) in filesystem {
         if !matches!(kind, file::FilesystemType::File) {
