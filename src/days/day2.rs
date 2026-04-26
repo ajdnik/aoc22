@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::Result;
 use log::{debug, info};
 use std::{
     fs::File,
@@ -69,20 +70,20 @@ fn fixed_match(scores: Vec<Option<Vec<i32>>>) -> i32 {
     total_score
 }
 
-pub fn task1(path: &str) {
-    if let Ok(rounds) = file::read_lines(path) {
-        let scores = to_scores(rounds);
-        debug!("Found strategies for {} rounds", scores.len());
-        let total = total_score(scores);
-        info!("Total score is {}", total);
-    }
+pub fn task1(path: &str) -> Result<()> {
+    let rounds = file::read_lines(path)?;
+    let scores = to_scores(rounds);
+    debug!("Found strategies for {} rounds", scores.len());
+    let total = total_score(scores);
+    info!("Total score is {}", total);
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(rounds) = file::read_lines(path) {
-        let scores = to_scores(rounds);
-        debug!("Found strategies for {} rounds", scores.len());
-        let fixed_total = fixed_match(scores);
-        info!("Total fixed score is {}", fixed_total);
-    }
+pub fn task2(path: &str) -> Result<()> {
+    let rounds = file::read_lines(path)?;
+    let scores = to_scores(rounds);
+    debug!("Found strategies for {} rounds", scores.len());
+    let fixed_total = fixed_match(scores);
+    info!("Total fixed score is {}", fixed_total);
+    Ok(())
 }

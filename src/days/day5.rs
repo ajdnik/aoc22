@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::Result;
 use log::{debug, info};
 use std::{
     fs::File,
@@ -79,24 +80,24 @@ fn get_top_crates(stacks: Vec<String>) -> String {
     })
 }
 
-pub fn task1(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let (stacks, operations) = parse_crates(lines);
-        debug!("Found {} stacks", stacks.len());
-        debug!("Found {} operations", operations.len());
-        let reordered_crates = move_crates(stacks, operations, None);
-        let top_crates = get_top_crates(reordered_crates);
-        info!("After reordering the top crates are {}", top_crates);
-    }
+pub fn task1(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let (stacks, operations) = parse_crates(lines);
+    debug!("Found {} stacks", stacks.len());
+    debug!("Found {} operations", operations.len());
+    let reordered_crates = move_crates(stacks, operations, None);
+    let top_crates = get_top_crates(reordered_crates);
+    info!("After reordering the top crates are {}", top_crates);
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let (stacks, operations) = parse_crates(lines);
-        debug!("Found {} stacks", stacks.len());
-        debug!("Found {} operations", operations.len());
-        let reordered_crates = move_crates(stacks, operations, Some(true));
-        let top_crates = get_top_crates(reordered_crates);
-        info!("After reordering the top crates are {}", top_crates);
-    }
+pub fn task2(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let (stacks, operations) = parse_crates(lines);
+    debug!("Found {} stacks", stacks.len());
+    debug!("Found {} operations", operations.len());
+    let reordered_crates = move_crates(stacks, operations, Some(true));
+    let top_crates = get_top_crates(reordered_crates);
+    info!("After reordering the top crates are {}", top_crates);
+    Ok(())
 }

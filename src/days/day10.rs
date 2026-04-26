@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::Result;
 use log::{debug, info};
 
 fn simulate_cpu(commands: &[(file::CPUCommand, i32)]) -> Vec<i32> {
@@ -41,35 +42,35 @@ fn to_crt(cycles: &[i32]) -> Vec<String> {
     })
 }
 
-pub fn task1(path: &str) {
-    if let Ok(input) = file::read_lines(path) {
-        let commands = file::to_commands::<i32>(input);
-        debug!("Found {} commands", commands.len());
-        let cycles = simulate_cpu(&commands);
-        debug!("Simulated {} cycles", cycles.len());
-        let cycle20 = cycles[19] * 20;
-        let cycle60 = cycles[59] * 60;
-        let cycle100 = cycles[99] * 100;
-        let cycle140 = cycles[139] * 140;
-        let cycle180 = cycles[179] * 180;
-        let cycle220 = cycles[219] * 220;
-        info!(
-            "Sum of cycles {}",
-            cycle20 + cycle60 + cycle100 + cycle140 + cycle180 + cycle220
-        );
-    }
+pub fn task1(path: &str) -> Result<()> {
+    let input = file::read_lines(path)?;
+    let commands = file::to_commands::<i32>(input);
+    debug!("Found {} commands", commands.len());
+    let cycles = simulate_cpu(&commands);
+    debug!("Simulated {} cycles", cycles.len());
+    let cycle20 = cycles[19] * 20;
+    let cycle60 = cycles[59] * 60;
+    let cycle100 = cycles[99] * 100;
+    let cycle140 = cycles[139] * 140;
+    let cycle180 = cycles[179] * 180;
+    let cycle220 = cycles[219] * 220;
+    info!(
+        "Sum of cycles {}",
+        cycle20 + cycle60 + cycle100 + cycle140 + cycle180 + cycle220
+    );
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(input) = file::read_lines(path) {
-        let commands = file::to_commands::<i32>(input);
-        debug!("Found {} commands", commands.len());
-        let cycles = simulate_cpu(&commands);
-        debug!("Simulated {} cycles", cycles.len());
-        let crt = to_crt(&cycles);
-        info!("CRT Output:");
-        for line in crt.iter() {
-            info!("{}", line);
-        }
+pub fn task2(path: &str) -> Result<()> {
+    let input = file::read_lines(path)?;
+    let commands = file::to_commands::<i32>(input);
+    debug!("Found {} commands", commands.len());
+    let cycles = simulate_cpu(&commands);
+    debug!("Simulated {} cycles", cycles.len());
+    let crt = to_crt(&cycles);
+    info!("CRT Output:");
+    for line in crt.iter() {
+        info!("{}", line);
     }
+    Ok(())
 }

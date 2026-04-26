@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::Result;
 use log::{debug, info};
 
 #[derive(PartialEq, PartialOrd, Ord, Eq)]
@@ -125,37 +126,37 @@ fn simulate_tail_movements(
     visited
 }
 
-pub fn task1(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let movements = file::to_movements(lines);
-        debug!("Found {} rope movements", movements.len());
-        let mut rope = vec![Position { x: 0, y: 0 }, Position { x: 0, y: 0 }];
-        let mut pos = simulate_tail_movements(&movements, 0, &mut rope);
-        pos.sort();
-        pos.dedup();
-        info!("The tail visited {} places", pos.len());
-    }
+pub fn task1(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let movements = file::to_movements(lines);
+    debug!("Found {} rope movements", movements.len());
+    let mut rope = vec![Position { x: 0, y: 0 }, Position { x: 0, y: 0 }];
+    let mut pos = simulate_tail_movements(&movements, 0, &mut rope);
+    pos.sort();
+    pos.dedup();
+    info!("The tail visited {} places", pos.len());
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let movements = file::to_movements(lines);
-        debug!("Found {} rope movements", movements.len());
-        let mut rope = vec![
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-            Position { x: 0, y: 0 },
-        ];
-        let mut pos = simulate_tail_movements(&movements, 0, &mut rope);
-        pos.sort();
-        pos.dedup();
-        info!("The tail visited {} places", pos.len());
-    }
+pub fn task2(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let movements = file::to_movements(lines);
+    debug!("Found {} rope movements", movements.len());
+    let mut rope = vec![
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+        Position { x: 0, y: 0 },
+    ];
+    let mut pos = simulate_tail_movements(&movements, 0, &mut rope);
+    pos.sort();
+    pos.dedup();
+    info!("The tail visited {} places", pos.len());
+    Ok(())
 }

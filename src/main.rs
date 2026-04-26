@@ -1,5 +1,6 @@
+use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
-use fern::{Dispatch, InitError};
+use fern::Dispatch;
 use log::LevelFilter;
 mod days;
 mod utils;
@@ -101,7 +102,7 @@ struct TaskWithPathAndMinutes26 {
     minutes: u32,
 }
 
-fn setup_logger(level: LevelFilter) -> Result<(), InitError> {
+fn setup_logger(level: LevelFilter) -> Result<()> {
     Dispatch::new()
         .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
         .level(level)
@@ -110,16 +111,15 @@ fn setup_logger(level: LevelFilter) -> Result<(), InitError> {
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let mut level = LevelFilter::Info;
-    if cli.verbose > 0 {
-        level = LevelFilter::Debug;
-    }
-    if let Err(err) = setup_logger(level) {
-        panic!("Problem setting up logger: {}", err)
-    }
+    let level = if cli.verbose > 0 {
+        LevelFilter::Debug
+    } else {
+        LevelFilter::Info
+    };
+    setup_logger(level).context("failed to set up logger")?;
 
     match &cli.day {
         Days::Day1(task) => match task {

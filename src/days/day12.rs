@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::{Context, Result};
 use log::{debug, info};
 use std::collections::{HashMap, VecDeque};
 
@@ -81,33 +82,33 @@ fn find_beginnings(elevation: &[Vec<u32>], beginning: u32) -> Vec<file::Position
     })
 }
 
-pub fn task1(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let (elevation, start, end) = file::to_elevation_map::<u32>(lines);
-        debug!("Loaded a {} x {} map", elevation.len(), elevation[0].len());
-        debug!("Starting point is ({}, {})", start.x, start.y);
-        debug!("Ending point is ({}, {})", end.x, end.y);
-        let path_length = path_length(&elevation, &end, &start);
-        info!("Shortest path is {}", path_length.unwrap());
-    }
+pub fn task1(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let (elevation, start, end) = file::to_elevation_map::<u32>(lines);
+    debug!("Loaded a {} x {} map", elevation.len(), elevation[0].len());
+    debug!("Starting point is ({}, {})", start.x, start.y);
+    debug!("Ending point is ({}, {})", end.x, end.y);
+    let length = path_length(&elevation, &end, &start).context("no path from start to end")?;
+    info!("Shortest path is {}", length);
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let (elevation, _, end) = file::to_elevation_map::<u32>(lines);
-        debug!("Loaded a {} x {} map", elevation.len(), elevation[0].len());
-        debug!("Ending point is ({}, {})", end.x, end.y);
-        let beginnings = find_beginnings(&elevation, 97);
-        debug!("Found {} starting points", beginnings.len());
-        let mut min_length = usize::MAX;
-        for beginning in beginnings.iter() {
-            let path_length = path_length(&elevation, &end, beginning);
-            if let Some(length) = path_length {
-                if length < min_length {
-                    min_length = length;
-                }
+pub fn task2(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let (elevation, _, end) = file::to_elevation_map::<u32>(lines);
+    debug!("Loaded a {} x {} map", elevation.len(), elevation[0].len());
+    debug!("Ending point is ({}, {})", end.x, end.y);
+    let beginnings = find_beginnings(&elevation, 97);
+    debug!("Found {} starting points", beginnings.len());
+    let mut min_length = usize::MAX;
+    for beginning in beginnings.iter() {
+        let path_length = path_length(&elevation, &end, beginning);
+        if let Some(length) = path_length {
+            if length < min_length {
+                min_length = length;
             }
         }
-        info!("Shortest path is {}", min_length);
     }
+    info!("Shortest path is {}", min_length);
+    Ok(())
 }

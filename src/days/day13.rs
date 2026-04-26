@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::{Context, Result};
 use log::{debug, info};
 use std::cmp::Ordering;
 
@@ -109,61 +110,64 @@ fn is_in_right_order(
     Ordering::Equal
 }
 
-pub fn task1(path: &str) {
-    if let Ok(input) = file::read_lines(path) {
-        let signals = file::to_signals::<u32>(input);
-        debug!("Found {} signals", signals.len());
-        let mut idx = 1;
-        let mut sum = 0;
-        for i in (0..signals.len()).step_by(2) {
-            if Ordering::Greater != is_in_right_order(signals[i].clone(), signals[i + 1].clone()) {
-                sum += idx;
-            }
-            idx += 1;
+pub fn task1(path: &str) -> Result<()> {
+    let input = file::read_lines(path)?;
+    let signals = file::to_signals::<u32>(input);
+    debug!("Found {} signals", signals.len());
+    let mut idx = 1;
+    let mut sum = 0;
+    for i in (0..signals.len()).step_by(2) {
+        if Ordering::Greater != is_in_right_order(signals[i].clone(), signals[i + 1].clone()) {
+            sum += idx;
         }
-        debug!("Checked {} pairs of signals", idx - 1);
-        info!("Sum of indices of ordered signals is {}", sum);
+        idx += 1;
     }
+    debug!("Checked {} pairs of signals", idx - 1);
+    info!("Sum of indices of ordered signals is {}", sum);
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(input) = file::read_lines(path) {
-        let mut signals = file::to_signals::<u32>(input);
-        debug!("Found {} signals", signals.len());
-        signals.push(vec![
-            file::SignalParts::Start,
-            file::SignalParts::Start,
-            file::SignalParts::Number(2),
-            file::SignalParts::End,
-            file::SignalParts::End,
-        ]);
-        signals.push(vec![
-            file::SignalParts::Start,
-            file::SignalParts::Start,
-            file::SignalParts::Number(6),
-            file::SignalParts::End,
-            file::SignalParts::End,
-        ]);
-        signals.sort_by(|left, right| is_in_right_order(left.clone(), right.clone()));
-        let divider_2 = signals.iter().position(|signal| {
+pub fn task2(path: &str) -> Result<()> {
+    let input = file::read_lines(path)?;
+    let mut signals = file::to_signals::<u32>(input);
+    debug!("Found {} signals", signals.len());
+    signals.push(vec![
+        file::SignalParts::Start,
+        file::SignalParts::Start,
+        file::SignalParts::Number(2),
+        file::SignalParts::End,
+        file::SignalParts::End,
+    ]);
+    signals.push(vec![
+        file::SignalParts::Start,
+        file::SignalParts::Start,
+        file::SignalParts::Number(6),
+        file::SignalParts::End,
+        file::SignalParts::End,
+    ]);
+    signals.sort_by(|left, right| is_in_right_order(left.clone(), right.clone()));
+    let divider_2 = signals
+        .iter()
+        .position(|signal| {
             signal.len() == 5
                 && signal[0] == file::SignalParts::Start
                 && signal[1] == file::SignalParts::Start
                 && signal[2] == file::SignalParts::Number(2)
                 && signal[3] == file::SignalParts::End
                 && signal[4] == file::SignalParts::End
-        });
-        let divider_6 = signals.iter().position(|signal| {
+        })
+        .context("divider [[2]] not found")?;
+    let divider_6 = signals
+        .iter()
+        .position(|signal| {
             signal.len() == 5
                 && signal[0] == file::SignalParts::Start
                 && signal[1] == file::SignalParts::Start
                 && signal[2] == file::SignalParts::Number(6)
                 && signal[3] == file::SignalParts::End
                 && signal[4] == file::SignalParts::End
-        });
-        info!(
-            "Decode key is {}",
-            (divider_2.unwrap() + 1) * (divider_6.unwrap() + 1)
-        );
-    }
+        })
+        .context("divider [[6]] not found")?;
+    info!("Decode key is {}", (divider_2 + 1) * (divider_6 + 1));
+    Ok(())
 }

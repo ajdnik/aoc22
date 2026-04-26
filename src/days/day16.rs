@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::Result;
 use log::{debug, info};
 use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -146,54 +147,54 @@ fn find_best_parallel_solutions(solutions: &[(Vec<String>, u32)], start: &str) -
     max_flow
 }
 
-pub fn task1(path: &str, minutes: u32) {
-    if let Ok(lines) = file::read_lines(path) {
-        let valves = file::to_valves::<u32>(lines);
-        debug!("Found {} valves", valves.len());
-        let distances = get_distances(&valves);
-        let unopened = get_unopened(&valves);
-        debug!("Found {} unopened valves", unopened.len());
-        let all_flows = compute_all_flows(
-            &valves,
-            &unopened,
-            &[String::from("AA")],
-            &distances,
-            minutes,
-            0,
-        );
-        debug!("Found {} possible solutions", all_flows.len());
-        let max_flow = all_flows.iter().fold(0, |max, result| {
-            let (_, flow) = result;
-            if *flow > max {
-                *flow
-            } else {
-                max
-            }
-        });
-        info!("Released {:?} pressure in {} minutes", max_flow, minutes);
-    }
+pub fn task1(path: &str, minutes: u32) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let valves = file::to_valves::<u32>(lines);
+    debug!("Found {} valves", valves.len());
+    let distances = get_distances(&valves);
+    let unopened = get_unopened(&valves);
+    debug!("Found {} unopened valves", unopened.len());
+    let all_flows = compute_all_flows(
+        &valves,
+        &unopened,
+        &[String::from("AA")],
+        &distances,
+        minutes,
+        0,
+    );
+    debug!("Found {} possible solutions", all_flows.len());
+    let max_flow = all_flows.iter().fold(0, |max, result| {
+        let (_, flow) = result;
+        if *flow > max {
+            *flow
+        } else {
+            max
+        }
+    });
+    info!("Released {:?} pressure in {} minutes", max_flow, minutes);
+    Ok(())
 }
 
-pub fn task2(path: &str, minutes: u32) {
-    if let Ok(lines) = file::read_lines(path) {
-        let valves = file::to_valves::<u32>(lines);
-        debug!("Found {} valves", valves.len());
-        let distances = get_distances(&valves);
-        let unopened = get_unopened(&valves);
-        debug!("Found {} unopened valves", unopened.len());
-        let all_flows = compute_all_flows(
-            &valves,
-            &unopened,
-            &[String::from("AA")],
-            &distances,
-            minutes,
-            0,
-        );
-        debug!("Found {} possible solutions", all_flows.len());
-        let best_flow = find_best_parallel_solutions(&all_flows, &String::from("AA"));
-        info!(
-            "Released {} pressure in {} minutes when working with 1 elephant",
-            best_flow, minutes
-        );
-    }
+pub fn task2(path: &str, minutes: u32) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let valves = file::to_valves::<u32>(lines);
+    debug!("Found {} valves", valves.len());
+    let distances = get_distances(&valves);
+    let unopened = get_unopened(&valves);
+    debug!("Found {} unopened valves", unopened.len());
+    let all_flows = compute_all_flows(
+        &valves,
+        &unopened,
+        &[String::from("AA")],
+        &distances,
+        minutes,
+        0,
+    );
+    debug!("Found {} possible solutions", all_flows.len());
+    let best_flow = find_best_parallel_solutions(&all_flows, "AA");
+    info!(
+        "Released {} pressure in {} minutes when working with 1 elephant",
+        best_flow, minutes
+    );
+    Ok(())
 }

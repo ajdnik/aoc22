@@ -1,4 +1,5 @@
 use crate::utils::file;
+use anyhow::Result;
 use log::{debug, error, info};
 use num::integer::{div_floor, lcm};
 
@@ -53,20 +54,20 @@ fn compute_monkey_business(
     inspect_count[inspect_count.len() - 1] * inspect_count[inspect_count.len() - 2]
 }
 
-pub fn task1(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let monkeys = file::to_monkeys(lines);
-        debug!("Found {} monkeys", monkeys.len());
-        let monkey_business = compute_monkey_business(&monkeys, 20, Some(3));
-        info!("Monkey business level is {}", monkey_business);
-    }
+pub fn task1(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let monkeys = file::to_monkeys(lines);
+    debug!("Found {} monkeys", monkeys.len());
+    let monkey_business = compute_monkey_business(&monkeys, 20, Some(3));
+    info!("Monkey business level is {}", monkey_business);
+    Ok(())
 }
 
-pub fn task2(path: &str) {
-    if let Ok(lines) = file::read_lines(path) {
-        let monkeys = file::to_monkeys(lines);
-        debug!("Found {} monkeys", monkeys.len());
-        let monkey_business = compute_monkey_business(&monkeys, 10000, None);
-        info!("Monkey business level is {}", monkey_business);
-    }
+pub fn task2(path: &str) -> Result<()> {
+    let lines = file::read_lines(path)?;
+    let monkeys = file::to_monkeys(lines);
+    debug!("Found {} monkeys", monkeys.len());
+    let monkey_business = compute_monkey_business(&monkeys, 10000, None);
+    info!("Monkey business level is {}", monkey_business);
+    Ok(())
 }
