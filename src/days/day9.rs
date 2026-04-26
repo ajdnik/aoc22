@@ -1,6 +1,5 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::{debug, info};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Position {
@@ -40,20 +39,14 @@ fn simulate(movements: &[file::Direction], rope_len: usize) -> usize {
     visited.len()
 }
 
-pub fn task1(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let movements = file::to_movements(lines);
-    debug!("Found {} rope movements", movements.len());
+pub fn part1(input: &str) -> Result<String> {
+    let movements = file::to_movements(file::lines_of(input));
     let count = simulate(&movements, 2);
-    info!("The tail visited {} places", count);
-    Ok(())
+    Ok(format!("The tail visited {} places", count))
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let movements = file::to_movements(lines);
-    debug!("Found {} rope movements", movements.len());
+pub fn part2(input: &str) -> Result<String> {
+    let movements = file::to_movements(file::lines_of(input));
     let count = simulate(&movements, 10);
-    info!("The tail visited {} places", count);
-    Ok(())
+    Ok(format!("The tail visited {} places", count))
 }

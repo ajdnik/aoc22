@@ -1,41 +1,25 @@
-use crate::utils::{file, vec};
+use crate::utils::vec;
 use anyhow::Result;
-use log::{debug, info};
+use std::fmt::Write;
 
-pub fn task1(path: &str) -> Result<()> {
-    let buffers = file::read_lines(path)?;
-    for (idx, itm) in buffers.enumerate() {
-        if let Ok(buffer) = itm {
-            debug!(
-                "Processing buffer at position {} with size {}",
-                idx,
-                buffer.len()
-            );
-            let start = vec::find_first_distinct_substring(buffer, 4);
-            info!(
-                "The first distinct 4 character substring for buffer at position {} starts at {}",
-                idx, start
-            );
-        }
+fn run(input: &str, size: usize) -> String {
+    let mut out = String::new();
+    for (idx, buffer) in input.lines().enumerate() {
+        let start = vec::find_first_distinct_substring(buffer.to_string(), size);
+        writeln!(
+            out,
+            "The first distinct {} character substring for buffer at position {} starts at {}",
+            size, idx, start
+        )
+        .unwrap();
     }
-    Ok(())
+    out.trim_end().to_string()
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let buffers = file::read_lines(path)?;
-    for (idx, itm) in buffers.enumerate() {
-        if let Ok(buffer) = itm {
-            debug!(
-                "Processing buffer at position {} with size {}",
-                idx,
-                buffer.len()
-            );
-            let start = vec::find_first_distinct_substring(buffer, 14);
-            info!(
-                "The first distinct 14 character substring for buffer at position {} starts at {}",
-                idx, start
-            );
-        }
-    }
-    Ok(())
+pub fn part1(input: &str) -> Result<String> {
+    Ok(run(input, 4))
+}
+
+pub fn part2(input: &str) -> Result<String> {
+    Ok(run(input, 14))
 }

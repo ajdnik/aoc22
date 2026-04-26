@@ -1,6 +1,5 @@
 use crate::utils::file;
 use anyhow::{Context, Result};
-use log::{debug, info};
 use std::collections::{HashMap, VecDeque};
 
 fn build_indexed(
@@ -126,27 +125,22 @@ fn best_parallel(best: &HashMap<u32, u32>) -> u32 {
     max
 }
 
-pub fn task1(path: &str, minutes: u32) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let valves = file::to_valves::<u32>(lines);
-    debug!("Found {} valves", valves.len());
+pub fn part1(input: &str, minutes: u32) -> Result<String> {
+    let valves = file::to_valves::<u32, _>(file::lines_of(input));
     let best = best_per_mask(&valves, minutes)?;
-    debug!("Found {} reachable opened-sets", best.len());
     let max_flow = best.values().copied().max().unwrap_or(0);
-    info!("Released {} pressure in {} minutes", max_flow, minutes);
-    Ok(())
+    Ok(format!(
+        "Released {} pressure in {} minutes",
+        max_flow, minutes
+    ))
 }
 
-pub fn task2(path: &str, minutes: u32) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let valves = file::to_valves::<u32>(lines);
-    debug!("Found {} valves", valves.len());
+pub fn part2(input: &str, minutes: u32) -> Result<String> {
+    let valves = file::to_valves::<u32, _>(file::lines_of(input));
     let best = best_per_mask(&valves, minutes)?;
-    debug!("Found {} reachable opened-sets", best.len());
     let best_flow = best_parallel(&best);
-    info!(
+    Ok(format!(
         "Released {} pressure in {} minutes when working with 1 elephant",
         best_flow, minutes
-    );
-    Ok(())
+    ))
 }

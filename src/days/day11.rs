@@ -1,6 +1,6 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::{debug, error, info};
+use log::error;
 use num::integer::{div_floor, lcm};
 
 fn find_lcm(values: &[u64]) -> u64 {
@@ -12,15 +12,9 @@ fn compute_monkey_business(
     rounds: usize,
     relief: Option<u64>,
 ) -> u64 {
-    let mut items = monkeys.iter().fold(Vec::new(), |mut items, monkey| {
-        items.push(monkey.items.clone());
-        items
-    });
-    let mut inspect_count = (0..monkeys.len()).fold(Vec::new(), |mut res, _| {
-        res.push(0);
-        res
-    });
-    let divisors: Vec<u64> = monkeys.iter().map(|monkey| monkey.test_divisible).collect();
+    let mut items: Vec<Vec<u64>> = monkeys.iter().map(|m| m.items.clone()).collect();
+    let mut inspect_count = vec![0u64; monkeys.len()];
+    let divisors: Vec<u64> = monkeys.iter().map(|m| m.test_divisible).collect();
     let lcm = find_lcm(&divisors);
     for _ in 0..rounds {
         for monkey_num in 0..monkeys.len() {
@@ -54,20 +48,14 @@ fn compute_monkey_business(
     inspect_count[inspect_count.len() - 1] * inspect_count[inspect_count.len() - 2]
 }
 
-pub fn task1(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let monkeys = file::to_monkeys(lines);
-    debug!("Found {} monkeys", monkeys.len());
+pub fn part1(input: &str) -> Result<String> {
+    let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input));
     let monkey_business = compute_monkey_business(&monkeys, 20, Some(3));
-    info!("Monkey business level is {}", monkey_business);
-    Ok(())
+    Ok(format!("Monkey business level is {}", monkey_business))
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let monkeys = file::to_monkeys(lines);
-    debug!("Found {} monkeys", monkeys.len());
+pub fn part2(input: &str) -> Result<String> {
+    let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input));
     let monkey_business = compute_monkey_business(&monkeys, 10000, None);
-    info!("Monkey business level is {}", monkey_business);
-    Ok(())
+    Ok(format!("Monkey business level is {}", monkey_business))
 }

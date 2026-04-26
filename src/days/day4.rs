@@ -1,35 +1,26 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::{debug, info};
 
-pub fn task1(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let pairs = file::to_range_touple::<i32>(lines);
-    debug!("Found {} pairs", pairs.len());
+pub fn part1(input: &str) -> Result<String> {
+    let pairs = file::to_range_touple::<i32, _>(file::lines_of(input));
     let mut count = 0;
-    for pair in pairs.iter() {
-        let (first, second) = pair;
+    for (first, second) in pairs.iter() {
         if (first.start <= second.start && first.end >= second.end)
             || (second.start <= first.start && second.end >= first.end)
         {
             count += 1;
         }
     }
-    info!("Found {} matching pairs", count);
-    Ok(())
+    Ok(format!("Found {} matching pairs", count))
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let pairs = file::to_range_touple::<i32>(lines);
-    debug!("Found {} pairs", pairs.len());
+pub fn part2(input: &str) -> Result<String> {
+    let pairs = file::to_range_touple::<i32, _>(file::lines_of(input));
     let mut count = 0;
-    for pair in pairs.iter() {
-        let (first, second) = pair;
+    for (first, second) in pairs.iter() {
         if first.start <= second.end && second.start <= first.end {
             count += 1;
         }
     }
-    info!("Found {} overlapping pairs", count);
-    Ok(())
+    Ok(format!("Found {} overlapping pairs", count))
 }

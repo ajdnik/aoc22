@@ -1,105 +1,23 @@
-use anyhow::{Context, Result};
-use clap::{Args, Parser, Subcommand};
+use anyhow::{anyhow, Context, Result};
+use aoc22::days;
+use clap::Parser;
 use fern::Dispatch;
-use log::LevelFilter;
-mod days;
-mod utils;
+use log::{info, LevelFilter};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    /// Day number (1-16)
+    day: u8,
+    /// Part number (1 or 2)
+    part: u8,
+    /// Path to input file
+    path: String,
+    /// Optional extra argument(s) (day15: row/max, day16: minutes)
+    extra: Vec<String>,
     /// Print verbose output
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
-    #[command(subcommand)]
-    day: Days,
-}
-
-#[derive(Subcommand)]
-enum Days {
-    #[command(subcommand)]
-    Day1(TwoTasks),
-    #[command(subcommand)]
-    Day2(TwoTasks),
-    #[command(subcommand)]
-    Day3(TwoTasks),
-    #[command(subcommand)]
-    Day4(TwoTasks),
-    #[command(subcommand)]
-    Day5(TwoTasks),
-    #[command(subcommand)]
-    Day6(TwoTasks),
-    #[command(subcommand)]
-    Day7(TwoTasks),
-    #[command(subcommand)]
-    Day8(TwoTasks),
-    #[command(subcommand)]
-    Day9(TwoTasks),
-    #[command(subcommand)]
-    Day10(TwoTasks),
-    #[command(subcommand)]
-    Day11(TwoTasks),
-    #[command(subcommand)]
-    Day12(TwoTasks),
-    #[command(subcommand)]
-    Day13(TwoTasks),
-    #[command(subcommand)]
-    Day14(TwoTasks),
-    #[command(subcommand)]
-    Day15(Day15Tasks),
-    #[command(subcommand)]
-    Day16(Day16Tasks),
-}
-
-#[derive(Subcommand)]
-enum TwoTasks {
-    Task1(TaskWithPath),
-    Task2(TaskWithPath),
-}
-
-#[derive(Subcommand)]
-enum Day15Tasks {
-    Task1(TaskWithPathAndRow),
-    Task2(TaskWithPathAndMax),
-}
-
-#[derive(Subcommand)]
-enum Day16Tasks {
-    Task1(TaskWithPathAndMinutes30),
-    Task2(TaskWithPathAndMinutes26),
-}
-
-#[derive(Args)]
-struct TaskWithPath {
-    path: String,
-}
-
-#[derive(Args)]
-struct TaskWithPathAndRow {
-    path: String,
-    #[arg(default_value_t = 2000000)]
-    row: i32,
-}
-
-#[derive(Args)]
-struct TaskWithPathAndMax {
-    path: String,
-    #[arg(default_value_t = 4000000)]
-    max: i32,
-}
-
-#[derive(Args)]
-struct TaskWithPathAndMinutes30 {
-    path: String,
-    #[arg(default_value_t = 30)]
-    minutes: u32,
-}
-
-#[derive(Args)]
-struct TaskWithPathAndMinutes26 {
-    path: String,
-    #[arg(default_value_t = 26)]
-    minutes: u32,
 }
 
 fn setup_logger(level: LevelFilter) -> Result<()> {
@@ -109,6 +27,56 @@ fn setup_logger(level: LevelFilter) -> Result<()> {
         .chain(std::io::stdout())
         .apply()?;
     Ok(())
+}
+
+fn parse_extra<T: std::str::FromStr>(extra: &[String], default: T) -> Result<T>
+where
+    T::Err: std::fmt::Display,
+{
+    match extra.first() {
+        Some(s) => s
+            .parse::<T>()
+            .map_err(|e| anyhow!("invalid extra arg {:?}: {}", s, e)),
+        None => Ok(default),
+    }
+}
+
+fn dispatch(day: u8, part: u8, input: &str, extra: &[String]) -> Result<String> {
+    match (day, part) {
+        (1, 1) => days::day1::part1(input),
+        (1, 2) => days::day1::part2(input),
+        (2, 1) => days::day2::part1(input),
+        (2, 2) => days::day2::part2(input),
+        (3, 1) => days::day3::part1(input),
+        (3, 2) => days::day3::part2(input),
+        (4, 1) => days::day4::part1(input),
+        (4, 2) => days::day4::part2(input),
+        (5, 1) => days::day5::part1(input),
+        (5, 2) => days::day5::part2(input),
+        (6, 1) => days::day6::part1(input),
+        (6, 2) => days::day6::part2(input),
+        (7, 1) => days::day7::part1(input),
+        (7, 2) => days::day7::part2(input),
+        (8, 1) => days::day8::part1(input),
+        (8, 2) => days::day8::part2(input),
+        (9, 1) => days::day9::part1(input),
+        (9, 2) => days::day9::part2(input),
+        (10, 1) => days::day10::part1(input),
+        (10, 2) => days::day10::part2(input),
+        (11, 1) => days::day11::part1(input),
+        (11, 2) => days::day11::part2(input),
+        (12, 1) => days::day12::part1(input),
+        (12, 2) => days::day12::part2(input),
+        (13, 1) => days::day13::part1(input),
+        (13, 2) => days::day13::part2(input),
+        (14, 1) => days::day14::part1(input),
+        (14, 2) => days::day14::part2(input),
+        (15, 1) => days::day15::part1(input, parse_extra::<i32>(extra, 2_000_000)?),
+        (15, 2) => days::day15::part2(input, parse_extra::<i32>(extra, 4_000_000)?),
+        (16, 1) => days::day16::part1(input, parse_extra::<u32>(extra, 30)?),
+        (16, 2) => days::day16::part2(input, parse_extra::<u32>(extra, 26)?),
+        _ => Err(anyhow!("unknown day/part: {} {}", day, part)),
+    }
 }
 
 fn main() -> Result<()> {
@@ -121,70 +89,12 @@ fn main() -> Result<()> {
     };
     setup_logger(level).context("failed to set up logger")?;
 
-    match &cli.day {
-        Days::Day1(task) => match task {
-            TwoTasks::Task1(args) => days::day1::task1(&args.path),
-            TwoTasks::Task2(args) => days::day1::task2(&args.path),
-        },
-        Days::Day2(task) => match task {
-            TwoTasks::Task1(args) => days::day2::task1(&args.path),
-            TwoTasks::Task2(args) => days::day2::task2(&args.path),
-        },
-        Days::Day3(task) => match task {
-            TwoTasks::Task1(args) => days::day3::task1(&args.path),
-            TwoTasks::Task2(args) => days::day3::task2(&args.path),
-        },
-        Days::Day4(task) => match task {
-            TwoTasks::Task1(args) => days::day4::task1(&args.path),
-            TwoTasks::Task2(args) => days::day4::task2(&args.path),
-        },
-        Days::Day5(task) => match task {
-            TwoTasks::Task1(args) => days::day5::task1(&args.path),
-            TwoTasks::Task2(args) => days::day5::task2(&args.path),
-        },
-        Days::Day6(task) => match task {
-            TwoTasks::Task1(args) => days::day6::task1(&args.path),
-            TwoTasks::Task2(args) => days::day6::task2(&args.path),
-        },
-        Days::Day7(task) => match task {
-            TwoTasks::Task1(args) => days::day7::task1(&args.path),
-            TwoTasks::Task2(args) => days::day7::task2(&args.path),
-        },
-        Days::Day8(task) => match task {
-            TwoTasks::Task1(args) => days::day8::task1(&args.path),
-            TwoTasks::Task2(args) => days::day8::task2(&args.path),
-        },
-        Days::Day9(task) => match task {
-            TwoTasks::Task1(args) => days::day9::task1(&args.path),
-            TwoTasks::Task2(args) => days::day9::task2(&args.path),
-        },
-        Days::Day10(task) => match task {
-            TwoTasks::Task1(args) => days::day10::task1(&args.path),
-            TwoTasks::Task2(args) => days::day10::task2(&args.path),
-        },
-        Days::Day11(task) => match task {
-            TwoTasks::Task1(args) => days::day11::task1(&args.path),
-            TwoTasks::Task2(args) => days::day11::task2(&args.path),
-        },
-        Days::Day12(task) => match task {
-            TwoTasks::Task1(args) => days::day12::task1(&args.path),
-            TwoTasks::Task2(args) => days::day12::task2(&args.path),
-        },
-        Days::Day13(task) => match task {
-            TwoTasks::Task1(args) => days::day13::task1(&args.path),
-            TwoTasks::Task2(args) => days::day13::task2(&args.path),
-        },
-        Days::Day14(task) => match task {
-            TwoTasks::Task1(args) => days::day14::task1(&args.path),
-            TwoTasks::Task2(args) => days::day14::task2(&args.path),
-        },
-        Days::Day15(task) => match task {
-            Day15Tasks::Task1(args) => days::day15::task1(&args.path, args.row),
-            Day15Tasks::Task2(args) => days::day15::task2(&args.path, args.max),
-        },
-        Days::Day16(task) => match task {
-            Day16Tasks::Task1(args) => days::day16::task1(&args.path, args.minutes),
-            Day16Tasks::Task2(args) => days::day16::task2(&args.path, args.minutes),
-        },
+    let input = std::fs::read_to_string(&cli.path)
+        .with_context(|| format!("failed to read input file {:?}", cli.path))?;
+
+    let result = dispatch(cli.day, cli.part, &input, &cli.extra)?;
+    for line in result.lines() {
+        info!("{}", line);
     }
+    Ok(())
 }

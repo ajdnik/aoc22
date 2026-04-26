@@ -1,6 +1,5 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::{debug, info};
 use std::collections::HashSet;
 
 fn find_lowest_point(walls: &[Vec<file::Position<u32>>]) -> u32 {
@@ -78,21 +77,15 @@ fn simulate_sand(walls: &[Vec<file::Position<u32>>], cave_floor: Option<u32>) ->
     total_granules
 }
 
-pub fn task1(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let walls = file::to_walls::<u32>(lines);
-    debug!("Found {} cave walls", walls.len());
-    let total_granules = simulate_sand(&walls, None);
-    info!("The cave is filled with {} sand granules", total_granules);
-    Ok(())
+pub fn part1(input: &str) -> Result<String> {
+    let walls = file::to_walls::<u32, _>(file::lines_of(input));
+    let total = simulate_sand(&walls, None);
+    Ok(format!("The cave is filled with {} sand granules", total))
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let walls = file::to_walls::<u32>(lines);
-    debug!("Found {} cave walls", walls.len());
+pub fn part2(input: &str) -> Result<String> {
+    let walls = file::to_walls::<u32, _>(file::lines_of(input));
     let lowest_point = find_lowest_point(&walls);
-    let total_granules = simulate_sand(&walls, Some(lowest_point + 2));
-    info!("The cave is filled with {} sand granules", total_granules);
-    Ok(())
+    let total = simulate_sand(&walls, Some(lowest_point + 2));
+    Ok(format!("The cave is filled with {} sand granules", total))
 }

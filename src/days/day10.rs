@@ -1,21 +1,22 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::{debug, info};
+use std::fmt::Write;
 
 fn simulate_cpu(commands: &[(file::CPUCommand, i32)]) -> Vec<i32> {
     let mut register = 1;
-    commands.iter().fold(Vec::new(), |mut cycles, itm| {
-        let (command, val) = itm;
-        match command {
-            file::CPUCommand::Noop => cycles.push(register),
-            file::CPUCommand::Addx => {
-                cycles.push(register);
-                cycles.push(register);
-                register += val;
+    commands
+        .iter()
+        .fold(Vec::new(), |mut cycles, (command, val)| {
+            match command {
+                file::CPUCommand::Noop => cycles.push(register),
+                file::CPUCommand::Addx => {
+                    cycles.push(register);
+                    cycles.push(register);
+                    register += val;
+                }
             }
-        }
-        cycles
-    })
+            cycles
+        })
 }
 
 fn to_crt(cycles: &[i32]) -> Vec<String> {
@@ -23,7 +24,7 @@ fn to_crt(cycles: &[i32]) -> Vec<String> {
     let mut cursor = 0;
     cycles.iter().fold(Vec::new(), |mut crt, register| {
         if cycle % 40 == 1 {
-            crt.push(String::from(""))
+            crt.push(String::new())
         }
         let mut row = String::from(crt.pop().unwrap().as_str());
         let sprite = [*register - 1, *register, *register + 1];
@@ -42,35 +43,25 @@ fn to_crt(cycles: &[i32]) -> Vec<String> {
     })
 }
 
-pub fn task1(path: &str) -> Result<()> {
-    let input = file::read_lines(path)?;
-    let commands = file::to_commands::<i32>(input);
-    debug!("Found {} commands", commands.len());
+pub fn part1(input: &str) -> Result<String> {
+    let commands = file::to_commands::<i32, _>(file::lines_of(input));
     let cycles = simulate_cpu(&commands);
-    debug!("Simulated {} cycles", cycles.len());
-    let cycle20 = cycles[19] * 20;
-    let cycle60 = cycles[59] * 60;
-    let cycle100 = cycles[99] * 100;
-    let cycle140 = cycles[139] * 140;
-    let cycle180 = cycles[179] * 180;
-    let cycle220 = cycles[219] * 220;
-    info!(
-        "Sum of cycles {}",
-        cycle20 + cycle60 + cycle100 + cycle140 + cycle180 + cycle220
-    );
-    Ok(())
+    let total = cycles[19] * 20
+        + cycles[59] * 60
+        + cycles[99] * 100
+        + cycles[139] * 140
+        + cycles[179] * 180
+        + cycles[219] * 220;
+    Ok(format!("Sum of cycles {}", total))
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let input = file::read_lines(path)?;
-    let commands = file::to_commands::<i32>(input);
-    debug!("Found {} commands", commands.len());
+pub fn part2(input: &str) -> Result<String> {
+    let commands = file::to_commands::<i32, _>(file::lines_of(input));
     let cycles = simulate_cpu(&commands);
-    debug!("Simulated {} cycles", cycles.len());
     let crt = to_crt(&cycles);
-    info!("CRT Output:");
+    let mut out = String::from("CRT Output:");
     for line in crt.iter() {
-        info!("{}", line);
+        write!(out, "\n{}", line).unwrap();
     }
-    Ok(())
+    Ok(out)
 }

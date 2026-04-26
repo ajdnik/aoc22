@@ -1,6 +1,5 @@
 use crate::utils::file;
 use anyhow::Result;
-use log::{debug, info};
 use num::{abs, Signed};
 use std::{
     cmp::{max, min},
@@ -97,35 +96,23 @@ fn find_frequency(
     None
 }
 
-pub fn task1(path: &str, row: i32) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let sensor_data = file::to_sensor_data::<i32>(lines);
-    debug!("Found {} sensors", sensor_data.len());
+pub fn part1(input: &str, row: i32) -> Result<String> {
+    let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input));
     let ranges = get_searched_ranges_for_y(&sensor_data, row, None);
-    debug!(
-        "Row {} has been searched in the following ranges: {:?}",
-        row, ranges
-    );
-    let searched_positions = ranges
+    let searched: i32 = ranges
         .iter()
         .fold(0, |sum, range| sum + (range.1 - range.0));
-    info!(
+    Ok(format!(
         "Row {} has {} positions that cannot contain a beacon",
-        row, searched_positions
-    );
-    Ok(())
+        row, searched
+    ))
 }
 
-pub fn task2(path: &str, max: i32) -> Result<()> {
-    let lines = file::read_lines(path)?;
-    let sensor_data = file::to_sensor_data::<i32>(lines);
-    debug!("Found {} sensors", sensor_data.len());
-    debug!("Searching using x=0..{} and y=0..{} space", max, max);
+pub fn part2(input: &str, max: i32) -> Result<String> {
+    let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input));
     let freq = find_frequency(&sensor_data, max);
-    if let Some(val) = freq {
-        info!("Tuning frequency of the missing beacon is {}", val);
-    } else {
-        info!("Couldn't find the missing becaon");
-    }
-    Ok(())
+    Ok(match freq {
+        Some(val) => format!("Tuning frequency of the missing beacon is {}", val),
+        None => String::from("Couldn't find the missing becaon"),
+    })
 }

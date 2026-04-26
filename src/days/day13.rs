@@ -1,6 +1,5 @@
 use crate::utils::file;
 use anyhow::{Context, Result};
-use log::{debug, info};
 use std::cmp::Ordering;
 
 fn convert_to_sublist(
@@ -110,27 +109,19 @@ fn is_in_right_order(
     Ordering::Equal
 }
 
-pub fn task1(path: &str) -> Result<()> {
-    let input = file::read_lines(path)?;
-    let signals = file::to_signals::<u32>(input);
-    debug!("Found {} signals", signals.len());
-    let mut idx = 1;
+pub fn part1(input: &str) -> Result<String> {
+    let signals = file::to_signals::<u32, _>(file::lines_of(input));
     let mut sum = 0;
-    for i in (0..signals.len()).step_by(2) {
+    for (idx, i) in (1..).zip((0..signals.len()).step_by(2)) {
         if Ordering::Greater != is_in_right_order(signals[i].clone(), signals[i + 1].clone()) {
             sum += idx;
         }
-        idx += 1;
     }
-    debug!("Checked {} pairs of signals", idx - 1);
-    info!("Sum of indices of ordered signals is {}", sum);
-    Ok(())
+    Ok(format!("Sum of indices of ordered signals is {}", sum))
 }
 
-pub fn task2(path: &str) -> Result<()> {
-    let input = file::read_lines(path)?;
-    let mut signals = file::to_signals::<u32>(input);
-    debug!("Found {} signals", signals.len());
+pub fn part2(input: &str) -> Result<String> {
+    let mut signals = file::to_signals::<u32, _>(file::lines_of(input));
     signals.push(vec![
         file::SignalParts::Start,
         file::SignalParts::Start,
@@ -168,6 +159,8 @@ pub fn task2(path: &str) -> Result<()> {
                 && signal[4] == file::SignalParts::End
         })
         .context("divider [[6]] not found")?;
-    info!("Decode key is {}", (divider_2 + 1) * (divider_6 + 1));
-    Ok(())
+    Ok(format!(
+        "Decode key is {}",
+        (divider_2 + 1) * (divider_6 + 1)
+    ))
 }
