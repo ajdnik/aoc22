@@ -1,15 +1,13 @@
 use aoc22::days::*;
 
 fn read(path: &str) -> String {
-    std::fs::read_to_string(path).unwrap_or_else(|e| panic!("failed to read {}: {}", path, e))
+    std::fs::read_to_string(path).unwrap_or_else(|e| panic!("failed to read {path}: {e}"))
 }
 
 fn assert_contains(haystack: &str, needle: &str) {
     assert!(
         haystack.contains(needle),
-        "expected output to contain {:?}, got:\n{}",
-        needle,
-        haystack
+        "expected output to contain {needle:?}, got:\n{haystack}"
     );
 }
 
@@ -74,8 +72,7 @@ fn day6() {
         assert_contains(
             &out1,
             &format!(
-                "distinct 4 character substring for buffer at position {} starts at {}",
-                idx, expected
+                "distinct 4 character substring for buffer at position {idx} starts at {expected}"
             ),
         );
     }
@@ -84,8 +81,7 @@ fn day6() {
         assert_contains(
             &out2,
             &format!(
-                "distinct 14 character substring for buffer at position {} starts at {}",
-                idx, expected
+                "distinct 14 character substring for buffer at position {idx} starts at {expected}"
             ),
         );
     }

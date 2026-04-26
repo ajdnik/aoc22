@@ -15,7 +15,7 @@ where
                 .map(|chr| {
                     let s = chr.to_string();
                     s.parse::<N>()
-                        .with_context(|| format!("parsing digit {:?}", s))
+                        .with_context(|| format!("parsing digit {s:?}"))
                 })
                 .collect::<Result<Vec<_>>>()
         })

@@ -16,7 +16,7 @@ where
                 .map(|point| {
                     let dim: Vec<&str> = point.split(',').collect();
                     if dim.len() != 2 {
-                        bail!("malformed point {:?}", point);
+                        bail!("malformed point {point:?}");
                     }
                     let x: N = dim[0]
                         .parse()

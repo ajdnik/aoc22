@@ -16,7 +16,7 @@ pub fn part1(input: &str) -> Result<String> {
             _ => None,
         })
         .sum();
-    Ok(format!("Sum of indices of ordered signals is {}", sum))
+    Ok(format!("Sum of indices of ordered signals is {sum}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {

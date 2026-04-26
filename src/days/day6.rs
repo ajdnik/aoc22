@@ -8,8 +8,7 @@ fn run(input: &str, size: usize) -> String {
         let start = vec::find_first_distinct_substring(buffer.to_string(), size);
         writeln!(
             out,
-            "The first distinct {} character substring for buffer at position {} starts at {}",
-            size, idx, start
+            "The first distinct {size} character substring for buffer at position {idx} starts at {start}"
         )
         .unwrap();
     }

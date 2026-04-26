@@ -82,7 +82,7 @@ fn find_frequency(
         let mut ranges = get_searched_ranges_for_y(data, y, Some(max_coord));
         if ranges.len() == 2 {
             ranges.sort_by_key(|a| a.0);
-            return Some((ranges[0].1 as u64 + 1) * 4000000 + y as u64);
+            return Some((ranges[0].1 as u64 + 1) * 4_000_000 + y as u64);
         }
     }
     None
@@ -95,8 +95,7 @@ pub fn part1(input: &str, row: i32) -> Result<String> {
         .iter()
         .fold(0, |sum, range| sum + (range.1 - range.0));
     Ok(format!(
-        "Row {} has {} positions that cannot contain a beacon",
-        row, searched
+        "Row {row} has {searched} positions that cannot contain a beacon"
     ))
 }
 
@@ -104,7 +103,7 @@ pub fn part2(input: &str, max: i32) -> Result<String> {
     let sensor_data = file::to_sensor_data::<i32, _>(file::lines_of(input))?;
     let freq = find_frequency(&sensor_data, max);
     Ok(match freq {
-        Some(val) => format!("Tuning frequency of the missing beacon is {}", val),
+        Some(val) => format!("Tuning frequency of the missing beacon is {val}"),
         None => String::from("Couldn't find the missing becaon"),
     })
 }

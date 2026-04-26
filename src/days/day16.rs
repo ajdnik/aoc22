@@ -129,10 +129,7 @@ pub fn part1(input: &str, minutes: u32) -> Result<String> {
     let valves = file::to_valves::<u32, _>(file::lines_of(input))?;
     let best = best_per_mask(&valves, minutes)?;
     let max_flow = best.values().copied().max().unwrap_or(0);
-    Ok(format!(
-        "Released {} pressure in {} minutes",
-        max_flow, minutes
-    ))
+    Ok(format!("Released {max_flow} pressure in {minutes} minutes"))
 }
 
 pub fn part2(input: &str, minutes: u32) -> Result<String> {
@@ -140,7 +137,6 @@ pub fn part2(input: &str, minutes: u32) -> Result<String> {
     let best = best_per_mask(&valves, minutes)?;
     let best_flow = best_parallel(&best);
     Ok(format!(
-        "Released {} pressure in {} minutes when working with 1 elephant",
-        best_flow, minutes
+        "Released {best_flow} pressure in {minutes} minutes when working with 1 elephant"
     ))
 }

@@ -1,37 +1,52 @@
 # aoc22
-Advent of Code 2022 🎄
 
-This repository contains [Advent of Code](https://adventofcode.com) task solutions for year 2022. All of the tasks are exposed via a singular command line tool.
+Advent of Code 2022 solutions in Rust. Days 1–16 implemented.
 
-### Running
+## Layout
 
-In order to run the solution you need to have [Rust](https://www.rust-lang.org) installed. Then you will need to compile the code and run it as shown:
+- `src/days/dayN.rs` — solutions, each exposing `part1(input: &str) -> Result<String>` and `part2(...)`. Days 15 and 16 take an extra numeric argument (target row / minutes).
+- `src/utils/file/` — input parsers, one per puzzle category (`groups`, `signals`, `valves`, `walls`, `sensors`, `monkeys`, …). Re-exported via `utils::file`.
+- `src/utils/vec.rs` — small generic helpers (matrix transforms, distinct-substring search).
+- `src/main.rs` — thin CLI dispatching `(day, part)` to the matching `partN`.
+- `src/lib.rs` — library entry point so the binary and tests share the same modules.
+- `tests/integration.rs` — runs every day against `input/dayNN/test.txt` in-process.
+
+## Build & run
 
 ```
-$ cargo build
-   Compiling autocfg v1.1.0
-   
-   ...
+$ cargo build --release
+$ ./target/release/aoc22 <day> <part> <path> [extra]
+```
 
-   Finished dev [unoptimized + debuginfo] target(s) in 7.73s
+`<day>` is `1`–`16`, `<part>` is `1` or `2`. `[extra]` overrides the default for the puzzles that need it:
 
-$ ./target/debug/aoc22 --help
-Advent Of Code 2022 CLI
+| day | part | extra |
+| --- | ---- | ----- |
+| 15  | 1    | target row (default `2_000_000`) |
+| 15  | 2    | search bound (default `4_000_000`) |
+| 16  | 1    | minutes (default `30`) |
+| 16  | 2    | minutes (default `26`) |
 
-Usage: aoc22 [OPTIONS] <COMMAND>
+Example:
 
-Commands:
-  day1
-  day2
-  day3
-  ...
-  help  Print this message or the help of the given subcommand(s)
-
-Options:
-  -v, --verbose...  Print verbose output
-  -h, --help        Print help information
-  -V, --version     Print version information
-
-$ ./target/debug/aoc22 day1 task1 ./input/day01/test.txt
+```
+$ ./target/release/aoc22 1 1 ./input/day01/test.txt
 [INFO] The maximum calorie count is 24000
+```
+
+## Tests
+
+```
+$ cargo test --release
+```
+
+Runs unit tests (parser correctness, malformed-input errors, `Signal` ordering) plus 16 integration tests that exercise every `partN` against its sample input.
+
+## Toolchain
+
+`rust-toolchain.toml` pins the channel (currently `1.95.0`) with `rustfmt` and `clippy`. Formatting and lint policy:
+
+```
+$ cargo fmt
+$ cargo clippy --all-targets -- -D warnings
 ```

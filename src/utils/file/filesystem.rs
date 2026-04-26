@@ -30,7 +30,7 @@ where
             if !line.starts_with("dir") {
                 let stats: Vec<&str> = line.split(' ').collect();
                 if stats.len() < 2 {
-                    bail!("malformed ls entry {:?}", line);
+                    bail!("malformed ls entry {line:?}");
                 }
                 let size: N = stats[0]
                     .parse()

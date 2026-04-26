@@ -13,12 +13,12 @@ where
         .map(|line| {
             let ranges: Vec<&str> = line.split(',').collect();
             if ranges.len() != 2 {
-                bail!("expected 2 ranges in line {:?}", line);
+                bail!("expected 2 ranges in line {line:?}");
             }
             let first: Vec<&str> = ranges[0].split('-').collect();
             let second: Vec<&str> = ranges[1].split('-').collect();
             if first.len() != 2 || second.len() != 2 {
-                bail!("malformed range in line {:?}", line);
+                bail!("malformed range in line {line:?}");
             }
             let a: N = first[0]
                 .parse()

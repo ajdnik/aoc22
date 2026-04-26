@@ -20,7 +20,7 @@ where
         }
         let val: N = line
             .parse()
-            .with_context(|| format!("parsing number {:?}", line))?;
+            .with_context(|| format!("parsing number {line:?}"))?;
         groups.last_mut().unwrap().push(val);
     }
     Ok(groups)

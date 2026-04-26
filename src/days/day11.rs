@@ -57,11 +57,11 @@ fn compute_monkey_business(
 pub fn part1(input: &str) -> Result<String> {
     let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input))?;
     let monkey_business = compute_monkey_business(&monkeys, 20, Some(3));
-    Ok(format!("Monkey business level is {}", monkey_business))
+    Ok(format!("Monkey business level is {monkey_business}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
     let monkeys = file::to_monkeys::<u64, usize, _>(file::lines_of(input))?;
-    let monkey_business = compute_monkey_business(&monkeys, 10000, None);
-    Ok(format!("Monkey business level is {}", monkey_business))
+    let monkey_business = compute_monkey_business(&monkeys, 10_000, None);
+    Ok(format!("Monkey business level is {monkey_business}"))
 }

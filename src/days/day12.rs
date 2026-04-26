@@ -47,7 +47,7 @@ fn path_length(
     while let Some(current_position) = must_visit.pop_front() {
         let neighbor_distance = distances.get(&current_position).unwrap_or(&usize::MAX) + 1;
         let neighbors = neighbors(elevation, &current_position);
-        for neighbor in neighbors.iter() {
+        for neighbor in &neighbors {
             if let Some(existing_distance) = distances.get(neighbor) {
                 if neighbor_distance >= *existing_distance {
                     continue;
@@ -77,19 +77,19 @@ fn find_beginnings(elevation: &[Vec<u32>], beginning: u32) -> Vec<file::Position
 pub fn part1(input: &str) -> Result<String> {
     let (elevation, start, end) = file::to_elevation_map::<u32, _>(file::lines_of(input));
     let length = path_length(&elevation, &end, &start).context("no path from start to end")?;
-    Ok(format!("Shortest path is {}", length))
+    Ok(format!("Shortest path is {length}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
     let (elevation, _, end) = file::to_elevation_map::<u32, _>(file::lines_of(input));
     let beginnings = find_beginnings(&elevation, 97);
     let mut min_length = usize::MAX;
-    for beginning in beginnings.iter() {
+    for beginning in &beginnings {
         if let Some(length) = path_length(&elevation, &end, beginning) {
             if length < min_length {
                 min_length = length;
             }
         }
     }
-    Ok(format!("Shortest path is {}", min_length))
+    Ok(format!("Shortest path is {min_length}"))
 }

@@ -22,10 +22,10 @@ where
         } else if let Some(num) = line.strip_prefix("addx ") {
             let val: N = num
                 .parse()
-                .with_context(|| format!("parsing addx operand {:?}", num))?;
+                .with_context(|| format!("parsing addx operand {num:?}"))?;
             commands.push((CPUCommand::Addx, val));
         } else {
-            bail!("unknown CPU command {:?}", line);
+            bail!("unknown CPU command {line:?}");
         }
     }
     Ok(commands)

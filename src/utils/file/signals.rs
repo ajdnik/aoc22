@@ -39,7 +39,7 @@ where
                 if !num_buffer.is_empty() {
                     let val: N = num_buffer
                         .parse()
-                        .with_context(|| format!("parsing signal number {:?}", num_buffer))?;
+                        .with_context(|| format!("parsing signal number {num_buffer:?}"))?;
                     stack
                         .last_mut()
                         .context("number outside any list")?
@@ -57,7 +57,7 @@ where
                 if !num_buffer.is_empty() {
                     let val: N = num_buffer
                         .parse()
-                        .with_context(|| format!("parsing signal number {:?}", num_buffer))?;
+                        .with_context(|| format!("parsing signal number {num_buffer:?}"))?;
                     stack
                         .last_mut()
                         .context("number outside any list")?
@@ -68,7 +68,7 @@ where
             c => num_buffer.push(c),
         }
     }
-    completed.with_context(|| format!("unclosed signal: {:?}", line))
+    completed.with_context(|| format!("unclosed signal: {line:?}"))
 }
 
 pub fn to_signals<N, I>(lines: I) -> Result<Vec<Signal<N>>>

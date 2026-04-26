@@ -43,18 +43,16 @@ where
         fn finish(self, idx: usize) -> Result<Monkey<N, T>> {
             Ok(Monkey {
                 items: self.items,
-                op: self
-                    .op
-                    .ok_or_else(|| anyhow!("monkey {} missing op", idx))?,
+                op: self.op.ok_or_else(|| anyhow!("monkey {idx} missing op"))?,
                 test_divisible: self
                     .test_divisible
-                    .ok_or_else(|| anyhow!("monkey {} missing test divisor", idx))?,
+                    .ok_or_else(|| anyhow!("monkey {idx} missing test divisor"))?,
                 test_true: self
                     .test_true
-                    .ok_or_else(|| anyhow!("monkey {} missing test_true", idx))?,
+                    .ok_or_else(|| anyhow!("monkey {idx} missing test_true"))?,
                 test_false: self
                     .test_false
-                    .ok_or_else(|| anyhow!("monkey {} missing test_false", idx))?,
+                    .ok_or_else(|| anyhow!("monkey {idx} missing test_false"))?,
             })
         }
     }
@@ -74,7 +72,7 @@ where
             for item in stripped.split(", ") {
                 b.items.push(
                     item.parse()
-                        .with_context(|| format!("parsing monkey item {:?}", item))?,
+                        .with_context(|| format!("parsing monkey item {item:?}"))?,
                 );
             }
         } else if let Some(stripped) = line.strip_prefix("  Operation: new = old ") {
@@ -83,33 +81,33 @@ where
                 .context("'Operation' before Monkey header")?;
             let parts: Vec<&str> = stripped.split(' ').collect();
             if parts.len() != 2 {
-                bail!("malformed operation {:?}", stripped);
+                bail!("malformed operation {stripped:?}");
             }
             b.op = Some(match (parts[0], parts[1]) {
                 ("+", val) => Operation::Add(
                     val.parse()
-                        .with_context(|| format!("parsing operand {:?}", val))?,
+                        .with_context(|| format!("parsing operand {val:?}"))?,
                 ),
                 ("*", "old") => Operation::Pow2,
                 ("*", val) => Operation::Multiply(
                     val.parse()
-                        .with_context(|| format!("parsing operand {:?}", val))?,
+                        .with_context(|| format!("parsing operand {val:?}"))?,
                 ),
-                _ => bail!("unsupported operation {:?}", stripped),
+                _ => bail!("unsupported operation {stripped:?}"),
             });
         } else if let Some(stripped) = line.strip_prefix("  Test: divisible by ") {
             let b = current.as_mut().context("'Test' before Monkey header")?;
             b.test_divisible = Some(
                 stripped
                     .parse()
-                    .with_context(|| format!("parsing test divisor {:?}", stripped))?,
+                    .with_context(|| format!("parsing test divisor {stripped:?}"))?,
             );
         } else if let Some(stripped) = line.strip_prefix("    If true: throw to monkey ") {
             let b = current.as_mut().context("'If true' before Monkey header")?;
             b.test_true = Some(
                 stripped
                     .parse()
-                    .with_context(|| format!("parsing test_true {:?}", stripped))?,
+                    .with_context(|| format!("parsing test_true {stripped:?}"))?,
             );
         } else if let Some(stripped) = line.strip_prefix("    If false: throw to monkey ") {
             let b = current
@@ -118,7 +116,7 @@ where
             b.test_false = Some(
                 stripped
                     .parse()
-                    .with_context(|| format!("parsing test_false {:?}", stripped))?,
+                    .with_context(|| format!("parsing test_false {stripped:?}"))?,
             );
         }
     }

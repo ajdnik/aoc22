@@ -73,7 +73,7 @@ pub fn part1(input: &str) -> Result<String> {
         .flat_map(|row| row.iter())
         .map(|val| if *val > 0 { 1 } else { 0 })
         .sum();
-    Ok(format!("{} trees are visible from outside", total_seen))
+    Ok(format!("{total_seen} trees are visible from outside"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
@@ -86,8 +86,5 @@ pub fn part2(input: &str) -> Result<String> {
         .copied()
         .max()
         .unwrap_or(0);
-    Ok(format!(
-        "Best cover score amongst the trees is {}",
-        max_score
-    ))
+    Ok(format!("Best cover score amongst the trees is {max_score}"))
 }

@@ -69,11 +69,11 @@ fn fixed_match(scores: &[Vec<i32>]) -> i32 {
 pub fn part1(input: &str) -> Result<String> {
     let scores = to_scores(file::lines_of(input));
     let total = total_score(&scores);
-    Ok(format!("Total score is {}", total))
+    Ok(format!("Total score is {total}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
     let scores = to_scores(file::lines_of(input));
     let fixed_total = fixed_match(&scores);
-    Ok(format!("Total fixed score is {}", fixed_total))
+    Ok(format!("Total fixed score is {fixed_total}"))
 }

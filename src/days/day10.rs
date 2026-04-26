@@ -52,7 +52,7 @@ pub fn part1(input: &str) -> Result<String> {
         + cycles[139] * 140
         + cycles[179] * 180
         + cycles[219] * 220;
-    Ok(format!("Sum of cycles {}", total))
+    Ok(format!("Sum of cycles {total}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
@@ -60,8 +60,8 @@ pub fn part2(input: &str) -> Result<String> {
     let cycles = simulate_cpu(&commands);
     let crt = to_crt(&cycles);
     let mut out = String::from("CRT Output:");
-    for line in crt.iter() {
-        write!(out, "\n{}", line).unwrap();
+    for line in &crt {
+        write!(out, "\n{line}").unwrap();
     }
     Ok(out)
 }

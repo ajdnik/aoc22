@@ -27,7 +27,7 @@ where
                         column
                             .chars()
                             .nth(1)
-                            .with_context(|| format!("malformed crate cell {:?}", column))?,
+                            .with_context(|| format!("malformed crate cell {column:?}"))?,
                     );
                     column_idx += 1;
                     space_count = 0;
@@ -42,7 +42,7 @@ where
         } else if line.starts_with("move") {
             let parts = line.split(' ').collect::<Vec<&str>>();
             if parts.len() < 6 {
-                bail!("malformed move line {:?}", line);
+                bail!("malformed move line {line:?}");
             }
             let a: N = parts[1]
                 .parse()
@@ -64,7 +64,7 @@ fn move_crates(
     operations: Vec<(usize, usize, usize)>,
     all_at_once: bool,
 ) -> Vec<String> {
-    for (size, from, to) in operations.iter() {
+    for (size, from, to) in &operations {
         let (first, rest) = stacks[from - 1].split_at(*size);
         let mut new_column: String = first.to_string();
         if !all_at_once {
@@ -88,12 +88,12 @@ pub fn part1(input: &str) -> Result<String> {
     let (stacks, operations) = parse_crates(file::lines_of(input))?;
     let reordered = move_crates(stacks, operations, false);
     let top = get_top_crates(&reordered);
-    Ok(format!("After reordering the top crates are {}", top))
+    Ok(format!("After reordering the top crates are {top}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
     let (stacks, operations) = parse_crates(file::lines_of(input))?;
     let reordered = move_crates(stacks, operations, true);
     let top = get_top_crates(&reordered);
-    Ok(format!("After reordering the top crates are {}", top))
+    Ok(format!("After reordering the top crates are {top}"))
 }

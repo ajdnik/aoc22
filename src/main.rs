@@ -22,7 +22,7 @@ where
     match extra.first() {
         Some(s) => s
             .parse::<T>()
-            .map_err(|e| anyhow!("invalid extra arg {:?}: {}", s, e)),
+            .map_err(|e| anyhow!("invalid extra arg {s:?}: {e}")),
         None => Ok(default),
     }
 }
@@ -61,7 +61,7 @@ fn dispatch(day: u8, part: u8, input: &str, extra: &[String]) -> Result<String> 
         (15, 2) => days::day15::part2(input, parse_extra::<i32>(extra, 4_000_000)?),
         (16, 1) => days::day16::part1(input, parse_extra::<u32>(extra, 30)?),
         (16, 2) => days::day16::part2(input, parse_extra::<u32>(extra, 26)?),
-        _ => Err(anyhow!("unknown day/part: {} {}", day, part)),
+        _ => Err(anyhow!("unknown day/part: {day} {part}")),
     }
 }
 
@@ -71,7 +71,7 @@ fn main() -> Result<()> {
         .with_context(|| format!("failed to read input file {:?}", cli.path))?;
     let result = dispatch(cli.day, cli.part, &input, &cli.extra)?;
     for line in result.lines() {
-        println!("[INFO] {}", line);
+        println!("[INFO] {line}");
     }
     Ok(())
 }

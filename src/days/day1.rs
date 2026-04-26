@@ -9,7 +9,7 @@ fn group_sums(input: &str) -> Result<Vec<i32>> {
 pub fn part1(input: &str) -> Result<String> {
     let sums = group_sums(input)?;
     let max = sums.iter().max().context("no calorie counts found")?;
-    Ok(format!("The maximum calorie count is {}", max))
+    Ok(format!("The maximum calorie count is {max}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
@@ -19,5 +19,5 @@ pub fn part2(input: &str) -> Result<String> {
         anyhow::bail!("expected at least 3 calorie groups, got {}", sums.len());
     }
     let top3 = sums[0] + sums[1] + sums[2];
-    Ok(format!("The top 3 calorie counts sum up to {}", top3))
+    Ok(format!("The top 3 calorie counts sum up to {top3}"))
 }

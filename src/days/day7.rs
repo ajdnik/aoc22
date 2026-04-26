@@ -29,14 +29,13 @@ where
 
 pub fn part1(input: &str) -> Result<String> {
     let filesystem = file::parse_filesystem::<u32, _>(file::lines_of(input))?;
-    let threshold = 100000;
+    let threshold = 100_000;
     let sum: u32 = directory_sizes(&filesystem)
         .values()
         .filter(|&&s| s <= threshold)
         .sum();
     Ok(format!(
-        "The size sum of all directories whose size is under {} is {}",
-        threshold, sum
+        "The size sum of all directories whose size is under {threshold} is {sum}"
     ))
 }
 
@@ -45,12 +44,12 @@ pub fn part2(input: &str) -> Result<String> {
     let sizes = directory_sizes(&filesystem);
     let root = &filesystem.first().context("filesystem is empty")?.1;
     let used = *sizes.get(root).context("root size not computed")?;
-    let need_to_free = 30000000 - (70000000 - used);
+    let need_to_free = 30_000_000 - (70_000_000 - used);
     let freed_up = sizes
         .values()
         .copied()
         .filter(|&s| s >= need_to_free)
         .min()
         .context("no directory large enough to free required space")?;
-    Ok(format!("Freed up {} to prepare for update", freed_up))
+    Ok(format!("Freed up {freed_up} to prepare for update"))
 }
