@@ -5,7 +5,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Day number (1-20)
+    /// Day number (1-21)
     day: u8,
     /// Part number (1 or 2)
     part: u8,
@@ -69,6 +69,8 @@ fn dispatch(day: u8, part: u8, input: &str, extra: &[String]) -> Result<String> 
         (19, 2) => days::day19::part2(input),
         (20, 1) => days::day20::part1(input),
         (20, 2) => days::day20::part2(input),
+        (21, 1) => days::day21::part1(input),
+        (21, 2) => days::day21::part2(input),
         _ => Err(anyhow!("unknown day/part: {day} {part}")),
     }
 }

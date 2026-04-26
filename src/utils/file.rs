@@ -1,6 +1,7 @@
 mod blueprints;
 mod cpu;
 mod elevation;
+mod expressions;
 mod filesystem;
 mod groups;
 mod matrix;
@@ -17,6 +18,7 @@ mod walls;
 pub use blueprints::{to_blueprints, Blueprint};
 pub use cpu::{to_commands, CPUCommand};
 pub use elevation::to_elevation_map;
+pub use expressions::{to_expressions, Expr, Op};
 pub use filesystem::{parse_filesystem, FilesystemType};
 pub use groups::{lines_of, to_groups, to_number_groups};
 pub use matrix::to_matrix;

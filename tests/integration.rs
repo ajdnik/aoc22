@@ -252,3 +252,10 @@ fn day20() {
         "Grove coordinates sum is 1623178306",
     );
 }
+
+#[test]
+fn day21() {
+    let input = read("input/day21/test.txt");
+    assert_contains(&day21::part1(&input).unwrap(), "Root yells 152");
+    assert_contains(&day21::part2(&input).unwrap(), "humn must yell 301");
+}
