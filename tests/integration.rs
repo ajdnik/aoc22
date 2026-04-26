@@ -292,3 +292,12 @@ fn day24() {
         "Round trip with snack takes 54 minutes",
     );
 }
+
+#[test]
+fn day25() {
+    let input = read("input/day25/test.txt");
+    assert_contains(
+        &day25::part1(&input).unwrap(),
+        "Fuel requirement in SNAFU is 2=-1=0",
+    );
+}
