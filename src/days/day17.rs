@@ -54,8 +54,7 @@ fn place(grid: &mut Vec<u8>, cells: Rock, cx: i64, cy: i64) {
 fn simulate(jets: &[u8], count: u64) -> u64 {
     let mut grid: Vec<u8> = Vec::new();
     let mut jet_idx = 0usize;
-    let mut seen: FxHashMap<(usize, usize, [u8; SKYLINE_DEPTH]), (u64, u64)> =
-        FxHashMap::default();
+    let mut seen: FxHashMap<(usize, usize, [u8; SKYLINE_DEPTH]), (u64, u64)> = FxHashMap::default();
     let mut bonus = 0u64;
     let mut i = 0u64;
     while i < count {

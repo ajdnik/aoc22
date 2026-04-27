@@ -61,7 +61,11 @@ fn apply(op: Op, a: i64, b: i64) -> i64 {
     }
 }
 
-fn eval(name: &str, exprs: &HashMap<String, Expr>, cache: &mut HashMap<String, i64>) -> Result<i64> {
+fn eval(
+    name: &str,
+    exprs: &HashMap<String, Expr>,
+    cache: &mut HashMap<String, i64>,
+) -> Result<i64> {
     if let Some(&v) = cache.get(name) {
         return Ok(v);
     }

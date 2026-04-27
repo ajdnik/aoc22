@@ -223,8 +223,14 @@ fn day6() {
 #[ignore]
 fn day9() {
     let input = read("input/day09/task.txt");
-    assert_contains(&day9::part1(&input).unwrap(), "The tail visited 6175 places");
-    assert_contains(&day9::part2(&input).unwrap(), "The tail visited 2578 places");
+    assert_contains(
+        &day9::part1(&input).unwrap(),
+        "The tail visited 6175 places",
+    );
+    assert_contains(
+        &day9::part2(&input).unwrap(),
+        "The tail visited 2578 places",
+    );
 }
 
 #[test]
