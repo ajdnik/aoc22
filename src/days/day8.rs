@@ -1,5 +1,27 @@
 use crate::utils::{file, vec};
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
+use std::str::FromStr;
+
+fn to_matrix<N, I>(lines: I) -> Result<Vec<Vec<N>>>
+where
+    N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    I: IntoIterator<Item = String>,
+{
+    lines
+        .into_iter()
+        .filter(|l| !l.is_empty())
+        .map(|line| {
+            line.chars()
+                .map(|chr| {
+                    let s = chr.to_string();
+                    s.parse::<N>()
+                        .with_context(|| format!("parsing digit {s:?}"))
+                })
+                .collect::<Result<Vec<_>>>()
+        })
+        .collect()
+}
 
 fn is_visible(x: usize, y: usize, matrix: &[Vec<u8>]) -> u8 {
     if y == 0 || y == matrix.len() - 1 {
@@ -59,7 +81,7 @@ fn calc_cover(x: usize, y: usize, matrix: &[Vec<u8>]) -> usize {
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let forest = file::to_matrix::<u8, _>(file::lines_of(input))?;
+    let forest = to_matrix::<u8, _>(file::lines_of(input))?;
     ensure!(!forest.is_empty(), "empty forest");
     let visible_top_left = vec::matrix_to_mask(&forest, is_visible);
     let reversed = vec::matrix_rotate180(&forest);
@@ -77,7 +99,7 @@ pub fn part1(input: &str) -> Result<String> {
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let forest = file::to_matrix::<u8, _>(file::lines_of(input))?;
+    let forest = to_matrix::<u8, _>(file::lines_of(input))?;
     ensure!(!forest.is_empty(), "empty forest");
     let cover_scores = vec::matrix_to_mask(&forest, calc_cover);
     let max_score = cover_scores
@@ -87,4 +109,22 @@ pub fn part2(input: &str) -> Result<String> {
         .max()
         .unwrap_or(0);
     Ok(format!("Best cover score amongst the trees is {max_score}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn builds_2d_grid() {
+        let lines = ["123", "456"].map(String::from);
+        let m = to_matrix::<u8, _>(lines).unwrap();
+        assert_eq!(m, vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    }
+
+    #[test]
+    fn errors_on_non_digit() {
+        let lines = ["12x"].map(String::from);
+        assert!(to_matrix::<u8, _>(lines).is_err());
+    }
 }

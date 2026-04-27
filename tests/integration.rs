@@ -11,58 +11,182 @@ fn assert_contains(haystack: &str, needle: &str) {
     );
 }
 
-#[test]
-fn day1() {
-    let input = read("input/day01/test.txt");
-    assert_contains(
-        &day1::part1(&input).unwrap(),
-        "The maximum calorie count is 24000",
-    );
-    assert_contains(
-        &day1::part2(&input).unwrap(),
-        "The top 3 calorie counts sum up to 45000",
-    );
+macro_rules! day_test {
+    ($name:ident, $module:ident, $path:expr, $p1:expr, $p2:expr) => {
+        #[test]
+        fn $name() {
+            let input = read($path);
+            assert_contains(&$module::part1(&input).unwrap(), $p1);
+            assert_contains(&$module::part2(&input).unwrap(), $p2);
+        }
+    };
 }
 
-#[test]
-fn day2() {
-    let input = read("input/day02/test.txt");
-    assert_contains(&day2::part1(&input).unwrap(), "Total score is 15");
-    assert_contains(&day2::part2(&input).unwrap(), "Total fixed score is 12");
+macro_rules! day_test_extra {
+    ($name:ident, $module:ident, $path:expr, $e1:expr, $p1:expr, $e2:expr, $p2:expr) => {
+        #[test]
+        fn $name() {
+            let input = read($path);
+            assert_contains(&$module::part1(&input, $e1).unwrap(), $p1);
+            assert_contains(&$module::part2(&input, $e2).unwrap(), $p2);
+        }
+    };
 }
 
-#[test]
-fn day3() {
-    let input = read("input/day03/test.txt");
-    assert_contains(
-        &day3::part1(&input).unwrap(),
-        "The priority sum of all duplicates is 157",
-    );
-    assert_contains(
-        &day3::part2(&input).unwrap(),
-        "The priority sum of all the badges is 70",
-    );
-}
+day_test!(
+    day1,
+    day1,
+    "input/day01/test.txt",
+    "The maximum calorie count is 24000",
+    "The top 3 calorie counts sum up to 45000"
+);
+day_test!(
+    day2,
+    day2,
+    "input/day02/test.txt",
+    "Total score is 15",
+    "Total fixed score is 12"
+);
+day_test!(
+    day3,
+    day3,
+    "input/day03/test.txt",
+    "The priority sum of all duplicates is 157",
+    "The priority sum of all the badges is 70"
+);
+day_test!(
+    day4,
+    day4,
+    "input/day04/test.txt",
+    "Found 2 matching pairs",
+    "Found 4 overlapping pairs"
+);
+day_test!(
+    day5,
+    day5,
+    "input/day05/test.txt",
+    "After reordering the top crates are CMZ",
+    "After reordering the top crates are MCD"
+);
+day_test!(
+    day7,
+    day7,
+    "input/day07/test.txt",
+    "size sum of all directories whose size is under 100000 is 95437",
+    "Freed up 24933642 to prepare for update"
+);
+day_test!(
+    day8,
+    day8,
+    "input/day08/test.txt",
+    "21 trees are visible from outside",
+    "Best cover score amongst the trees is 8"
+);
+day_test!(
+    day11,
+    day11,
+    "input/day11/test.txt",
+    "Monkey business level is 10605",
+    "Monkey business level is 2713310158"
+);
+day_test!(
+    day12,
+    day12,
+    "input/day12/test.txt",
+    "Shortest path is 31",
+    "Shortest path is 29"
+);
+day_test!(
+    day13,
+    day13,
+    "input/day13/test.txt",
+    "Sum of indices of ordered signals is 13",
+    "Decode key is 140"
+);
+day_test!(
+    day14,
+    day14,
+    "input/day14/test.txt",
+    "The cave is filled with 24 sand granules",
+    "The cave is filled with 93 sand granules"
+);
+day_test!(
+    day18,
+    day18,
+    "input/day18/test.txt",
+    "Total surface area is 64",
+    "Exterior surface area is 58"
+);
+day_test!(
+    day19,
+    day19,
+    "input/day19/test.txt",
+    "Sum of quality levels is 33",
+    "Product of geodes from first 3 blueprints is 3472"
+);
+day_test!(
+    day20,
+    day20,
+    "input/day20/test.txt",
+    "Grove coordinates sum is 3",
+    "Grove coordinates sum is 1623178306"
+);
+day_test!(
+    day21,
+    day21,
+    "input/day21/test.txt",
+    "Root yells 152",
+    "humn must yell 301"
+);
+day_test!(
+    day22,
+    day22,
+    "input/day22/test.txt",
+    "Final password is 6032",
+    "Final password is 5031"
+);
+day_test!(
+    day23,
+    day23,
+    "input/day23/test.txt",
+    "Empty tiles in bounding rectangle: 110",
+    "First round with no movement: 20"
+);
+day_test!(
+    day24,
+    day24,
+    "input/day24/test.txt",
+    "Fastest path to goal takes 18 minutes",
+    "Round trip with snack takes 54 minutes"
+);
 
-#[test]
-fn day4() {
-    let input = read("input/day04/test.txt");
-    assert_contains(&day4::part1(&input).unwrap(), "Found 2 matching pairs");
-    assert_contains(&day4::part2(&input).unwrap(), "Found 4 overlapping pairs");
-}
-
-#[test]
-fn day5() {
-    let input = read("input/day05/test.txt");
-    assert_contains(
-        &day5::part1(&input).unwrap(),
-        "After reordering the top crates are CMZ",
-    );
-    assert_contains(
-        &day5::part2(&input).unwrap(),
-        "After reordering the top crates are MCD",
-    );
-}
+day_test_extra!(
+    day15,
+    day15,
+    "input/day15/test.txt",
+    10,
+    "Row 10 has 26 positions that cannot contain a beacon",
+    20,
+    "Tuning frequency of the missing beacon is 56000011"
+);
+day_test_extra!(
+    day16,
+    day16,
+    "input/day16/test.txt",
+    30,
+    "Released 1651 pressure in 30 minutes",
+    26,
+    "Released 1707 pressure in 26 minutes when working with 1 elephant"
+);
+day_test_extra!(
+    day17,
+    day17,
+    "input/day17/test.txt",
+    2022,
+    "Tower height after 2022 rocks is 3068",
+    1_000_000_000_000,
+    "Tower height after 1000000000000 rocks is 1514285714288"
+);
 
 #[test]
 fn day6() {
@@ -88,32 +212,6 @@ fn day6() {
 }
 
 #[test]
-fn day7() {
-    let input = read("input/day07/test.txt");
-    assert_contains(
-        &day7::part1(&input).unwrap(),
-        "size sum of all directories whose size is under 100000 is 95437",
-    );
-    assert_contains(
-        &day7::part2(&input).unwrap(),
-        "Freed up 24933642 to prepare for update",
-    );
-}
-
-#[test]
-fn day8() {
-    let input = read("input/day08/test.txt");
-    assert_contains(
-        &day8::part1(&input).unwrap(),
-        "21 trees are visible from outside",
-    );
-    assert_contains(
-        &day8::part2(&input).unwrap(),
-        "Best cover score amongst the trees is 8",
-    );
-}
-
-#[test]
 fn day9() {
     let input1 = read("input/day09/test1.txt");
     let input2 = read("input/day09/test2.txt");
@@ -136,161 +234,6 @@ fn day10() {
     ] {
         assert_contains(&out2, line);
     }
-}
-
-#[test]
-fn day11() {
-    let input = read("input/day11/test.txt");
-    assert_contains(
-        &day11::part1(&input).unwrap(),
-        "Monkey business level is 10605",
-    );
-    assert_contains(
-        &day11::part2(&input).unwrap(),
-        "Monkey business level is 2713310158",
-    );
-}
-
-#[test]
-fn day12() {
-    let input = read("input/day12/test.txt");
-    assert_contains(&day12::part1(&input).unwrap(), "Shortest path is 31");
-    assert_contains(&day12::part2(&input).unwrap(), "Shortest path is 29");
-}
-
-#[test]
-fn day13() {
-    let input = read("input/day13/test.txt");
-    assert_contains(
-        &day13::part1(&input).unwrap(),
-        "Sum of indices of ordered signals is 13",
-    );
-    assert_contains(&day13::part2(&input).unwrap(), "Decode key is 140");
-}
-
-#[test]
-fn day14() {
-    let input = read("input/day14/test.txt");
-    assert_contains(
-        &day14::part1(&input).unwrap(),
-        "The cave is filled with 24 sand granules",
-    );
-    assert_contains(
-        &day14::part2(&input).unwrap(),
-        "The cave is filled with 93 sand granules",
-    );
-}
-
-#[test]
-fn day15() {
-    let input = read("input/day15/test.txt");
-    assert_contains(
-        &day15::part1(&input, 10).unwrap(),
-        "Row 10 has 26 positions that cannot contain a beacon",
-    );
-    assert_contains(
-        &day15::part2(&input, 20).unwrap(),
-        "Tuning frequency of the missing beacon is 56000011",
-    );
-}
-
-#[test]
-fn day16() {
-    let input = read("input/day16/test.txt");
-    assert_contains(
-        &day16::part1(&input, 30).unwrap(),
-        "Released 1651 pressure in 30 minutes",
-    );
-    assert_contains(
-        &day16::part2(&input, 26).unwrap(),
-        "Released 1707 pressure in 26 minutes when working with 1 elephant",
-    );
-}
-
-#[test]
-fn day17() {
-    let input = read("input/day17/test.txt");
-    assert_contains(
-        &day17::part1(&input, 2022).unwrap(),
-        "Tower height after 2022 rocks is 3068",
-    );
-    assert_contains(
-        &day17::part2(&input, 1_000_000_000_000).unwrap(),
-        "Tower height after 1000000000000 rocks is 1514285714288",
-    );
-}
-
-#[test]
-fn day18() {
-    let input = read("input/day18/test.txt");
-    assert_contains(&day18::part1(&input).unwrap(), "Total surface area is 64");
-    assert_contains(
-        &day18::part2(&input).unwrap(),
-        "Exterior surface area is 58",
-    );
-}
-
-#[test]
-fn day19() {
-    let input = read("input/day19/test.txt");
-    assert_contains(
-        &day19::part1(&input).unwrap(),
-        "Sum of quality levels is 33",
-    );
-    assert_contains(
-        &day19::part2(&input).unwrap(),
-        "Product of geodes from first 3 blueprints is 3472",
-    );
-}
-
-#[test]
-fn day20() {
-    let input = read("input/day20/test.txt");
-    assert_contains(&day20::part1(&input).unwrap(), "Grove coordinates sum is 3");
-    assert_contains(
-        &day20::part2(&input).unwrap(),
-        "Grove coordinates sum is 1623178306",
-    );
-}
-
-#[test]
-fn day21() {
-    let input = read("input/day21/test.txt");
-    assert_contains(&day21::part1(&input).unwrap(), "Root yells 152");
-    assert_contains(&day21::part2(&input).unwrap(), "humn must yell 301");
-}
-
-#[test]
-fn day22() {
-    let input = read("input/day22/test.txt");
-    assert_contains(&day22::part1(&input).unwrap(), "Final password is 6032");
-    assert_contains(&day22::part2(&input).unwrap(), "Final password is 5031");
-}
-
-#[test]
-fn day23() {
-    let input = read("input/day23/test.txt");
-    assert_contains(
-        &day23::part1(&input).unwrap(),
-        "Empty tiles in bounding rectangle: 110",
-    );
-    assert_contains(
-        &day23::part2(&input).unwrap(),
-        "First round with no movement: 20",
-    );
-}
-
-#[test]
-fn day24() {
-    let input = read("input/day24/test.txt");
-    assert_contains(
-        &day24::part1(&input).unwrap(),
-        "Fastest path to goal takes 18 minutes",
-    );
-    assert_contains(
-        &day24::part2(&input).unwrap(),
-        "Round trip with snack takes 54 minutes",
-    );
 }
 
 #[test]

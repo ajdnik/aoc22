@@ -1,18 +1,25 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use aoc22::days;
 use clap::Parser;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
     /// Day number (1-25)
     day: u8,
-    /// Part number (1 or 2)
+    /// Part number (1 or 2; day 25 only has part 1)
     part: u8,
     /// Path to input file
     path: String,
     /// Optional extra argument(s) (day15: row/max, day16: minutes, day17: rock count)
     extra: Vec<String>,
+    /// Print only the answer (no [INFO] prefix)
+    #[arg(long)]
+    raw: bool,
+    /// Print elapsed time after the answer
+    #[arg(long)]
+    time: bool,
 }
 
 fn parse_extra<T: std::str::FromStr>(extra: &[String], default: T) -> Result<T>
@@ -27,69 +34,86 @@ where
     }
 }
 
+type Handler = fn(&str, &[String]) -> Result<String>;
+
+const HANDLERS: [Handler; 50] = [
+    |i, _| days::day1::part1(i),
+    |i, _| days::day1::part2(i),
+    |i, _| days::day2::part1(i),
+    |i, _| days::day2::part2(i),
+    |i, _| days::day3::part1(i),
+    |i, _| days::day3::part2(i),
+    |i, _| days::day4::part1(i),
+    |i, _| days::day4::part2(i),
+    |i, _| days::day5::part1(i),
+    |i, _| days::day5::part2(i),
+    |i, _| days::day6::part1(i),
+    |i, _| days::day6::part2(i),
+    |i, _| days::day7::part1(i),
+    |i, _| days::day7::part2(i),
+    |i, _| days::day8::part1(i),
+    |i, _| days::day8::part2(i),
+    |i, _| days::day9::part1(i),
+    |i, _| days::day9::part2(i),
+    |i, _| days::day10::part1(i),
+    |i, _| days::day10::part2(i),
+    |i, _| days::day11::part1(i),
+    |i, _| days::day11::part2(i),
+    |i, _| days::day12::part1(i),
+    |i, _| days::day12::part2(i),
+    |i, _| days::day13::part1(i),
+    |i, _| days::day13::part2(i),
+    |i, _| days::day14::part1(i),
+    |i, _| days::day14::part2(i),
+    |i, e| days::day15::part1(i, parse_extra::<i32>(e, 2_000_000)?),
+    |i, e| days::day15::part2(i, parse_extra::<i32>(e, 4_000_000)?),
+    |i, e| days::day16::part1(i, parse_extra::<u32>(e, 30)?),
+    |i, e| days::day16::part2(i, parse_extra::<u32>(e, 26)?),
+    |i, e| days::day17::part1(i, parse_extra::<u64>(e, 2022)?),
+    |i, e| days::day17::part2(i, parse_extra::<u64>(e, 1_000_000_000_000)?),
+    |i, _| days::day18::part1(i),
+    |i, _| days::day18::part2(i),
+    |i, _| days::day19::part1(i),
+    |i, _| days::day19::part2(i),
+    |i, _| days::day20::part1(i),
+    |i, _| days::day20::part2(i),
+    |i, _| days::day21::part1(i),
+    |i, _| days::day21::part2(i),
+    |i, _| days::day22::part1(i),
+    |i, _| days::day22::part2(i),
+    |i, _| days::day23::part1(i),
+    |i, _| days::day23::part2(i),
+    |i, _| days::day24::part1(i),
+    |i, _| days::day24::part2(i),
+    |i, _| days::day25::part1(i),
+    |_, _| bail!("day 25 has no part 2 — it unlocks once you've collected all 49 stars"),
+];
+
 fn dispatch(day: u8, part: u8, input: &str, extra: &[String]) -> Result<String> {
-    match (day, part) {
-        (1, 1) => days::day1::part1(input),
-        (1, 2) => days::day1::part2(input),
-        (2, 1) => days::day2::part1(input),
-        (2, 2) => days::day2::part2(input),
-        (3, 1) => days::day3::part1(input),
-        (3, 2) => days::day3::part2(input),
-        (4, 1) => days::day4::part1(input),
-        (4, 2) => days::day4::part2(input),
-        (5, 1) => days::day5::part1(input),
-        (5, 2) => days::day5::part2(input),
-        (6, 1) => days::day6::part1(input),
-        (6, 2) => days::day6::part2(input),
-        (7, 1) => days::day7::part1(input),
-        (7, 2) => days::day7::part2(input),
-        (8, 1) => days::day8::part1(input),
-        (8, 2) => days::day8::part2(input),
-        (9, 1) => days::day9::part1(input),
-        (9, 2) => days::day9::part2(input),
-        (10, 1) => days::day10::part1(input),
-        (10, 2) => days::day10::part2(input),
-        (11, 1) => days::day11::part1(input),
-        (11, 2) => days::day11::part2(input),
-        (12, 1) => days::day12::part1(input),
-        (12, 2) => days::day12::part2(input),
-        (13, 1) => days::day13::part1(input),
-        (13, 2) => days::day13::part2(input),
-        (14, 1) => days::day14::part1(input),
-        (14, 2) => days::day14::part2(input),
-        (15, 1) => days::day15::part1(input, parse_extra::<i32>(extra, 2_000_000)?),
-        (15, 2) => days::day15::part2(input, parse_extra::<i32>(extra, 4_000_000)?),
-        (16, 1) => days::day16::part1(input, parse_extra::<u32>(extra, 30)?),
-        (16, 2) => days::day16::part2(input, parse_extra::<u32>(extra, 26)?),
-        (17, 1) => days::day17::part1(input, parse_extra::<u64>(extra, 2022)?),
-        (17, 2) => days::day17::part2(input, parse_extra::<u64>(extra, 1_000_000_000_000)?),
-        (18, 1) => days::day18::part1(input),
-        (18, 2) => days::day18::part2(input),
-        (19, 1) => days::day19::part1(input),
-        (19, 2) => days::day19::part2(input),
-        (20, 1) => days::day20::part1(input),
-        (20, 2) => days::day20::part2(input),
-        (21, 1) => days::day21::part1(input),
-        (21, 2) => days::day21::part2(input),
-        (22, 1) => days::day22::part1(input),
-        (22, 2) => days::day22::part2(input),
-        (23, 1) => days::day23::part1(input),
-        (23, 2) => days::day23::part2(input),
-        (24, 1) => days::day24::part1(input),
-        (24, 2) => days::day24::part2(input),
-        (25, 1) => days::day25::part1(input),
-        (25, 2) => days::day25::part2(input),
-        _ => Err(anyhow!("unknown day/part: {day} {part}")),
+    if !(1..=25).contains(&day) || !(1..=2).contains(&part) {
+        bail!("unknown day/part: {day} {part}");
     }
+    let idx = (day as usize - 1) * 2 + (part as usize - 1);
+    HANDLERS[idx](input, extra)
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let input = std::fs::read_to_string(&cli.path)
         .with_context(|| format!("failed to read input file {:?}", cli.path))?;
+    let started = Instant::now();
     let result = dispatch(cli.day, cli.part, &input, &cli.extra)?;
+    let elapsed = started.elapsed();
     for line in result.lines() {
-        println!("[INFO] {line}");
+        if cli.raw {
+            println!("{line}");
+        } else {
+            println!("[INFO] {line}");
+        }
+    }
+    if cli.time {
+        let prefix = if cli.raw { "" } else { "[INFO] " };
+        println!("{prefix}elapsed: {:.3?}", elapsed);
     }
     Ok(())
 }

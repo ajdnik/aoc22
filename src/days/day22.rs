@@ -1,23 +1,6 @@
+use crate::utils::cube::{add, dot, neg, scale, sub, V3};
 use anyhow::{bail, Context, Result};
 use std::collections::{HashMap, HashSet, VecDeque};
-
-type V3 = [i32; 3];
-
-fn add(a: V3, b: V3) -> V3 {
-    [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
-}
-fn sub(a: V3, b: V3) -> V3 {
-    [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
-}
-fn neg(a: V3) -> V3 {
-    [-a[0], -a[1], -a[2]]
-}
-fn scale(a: V3, k: i32) -> V3 {
-    [a[0] * k, a[1] * k, a[2] * k]
-}
-fn dot(a: V3, b: V3) -> i32 {
-    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-}
 
 #[derive(Clone, Debug)]
 struct Face {
@@ -110,6 +93,14 @@ fn find_blocks(grid: &[Vec<char>], s: usize) -> Vec<(usize, usize)> {
     blocks
 }
 
+// Fold neighbour face's basis given parent face `p` and grid direction `dir`
+// (0 east, 1 south, 2 west, 3 north). `s` is face side length.
+// Returns (right, down, normal, origin) for the new face. Origin is the 3D
+// position of the new face's top-left corner.
+//
+// East fold: new normal = -p.right (the new face wraps around the parent's
+// right edge), origin shifts by +s along p.right. Other directions follow
+// the same right-hand-rule pattern, swapping which axis becomes the normal.
 fn fold(p: &Face, dir: usize, s: i32) -> (V3, V3, V3, V3) {
     match dir {
         0 => (neg(p.n), p.d, p.r, add(p.o, scale(p.r, s))),
@@ -208,9 +199,12 @@ fn step_2d(grid: &[Vec<char>], r: i32, c: i32, facing: usize) -> (i32, i32) {
     }
 }
 
-fn walk_2d(grid: &[Vec<char>], path: &[Step]) -> (i32, i32, usize) {
+fn walk_2d(grid: &[Vec<char>], path: &[Step]) -> Result<(i32, i32, usize)> {
     let r0 = 0i32;
-    let c0 = grid[0].iter().position(|&c| c == '.').unwrap() as i32;
+    let c0 = grid[0]
+        .iter()
+        .position(|&c| c == '.')
+        .context("no open cell on top row")? as i32;
     let mut r = r0;
     let mut c = c0;
     let mut facing = 0usize;
@@ -230,7 +224,7 @@ fn walk_2d(grid: &[Vec<char>], path: &[Step]) -> (i32, i32, usize) {
             Step::Right => facing = (facing + 1) % 4,
         }
     }
-    (r, c, facing)
+    Ok((r, c, facing))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -297,8 +291,16 @@ fn step_cube(
     (f_prime_idx, new_r, new_c, new_facing)
 }
 
-fn walk_cube(grid: &[Vec<char>], faces: &[Face], s: usize, path: &[Step]) -> (usize, usize, usize) {
-    let c0 = grid[0].iter().position(|&c| c == '.').unwrap();
+fn walk_cube(
+    grid: &[Vec<char>],
+    faces: &[Face],
+    s: usize,
+    path: &[Step],
+) -> Result<(usize, usize, usize)> {
+    let c0 = grid[0]
+        .iter()
+        .position(|&c| c == '.')
+        .context("no open cell on top row")?;
     let bc0 = c0 / s;
     let mut idx = faces
         .iter()
@@ -329,12 +331,12 @@ fn walk_cube(grid: &[Vec<char>], faces: &[Face], s: usize, path: &[Step]) -> (us
     }
     let abs_r = faces[idx].br * s + r;
     let abs_c = faces[idx].bc * s + c;
-    (abs_r, abs_c, facing)
+    Ok((abs_r, abs_c, facing))
 }
 
 pub fn part1(input: &str) -> Result<String> {
     let (grid, path) = parse(input)?;
-    let (r, c, facing) = walk_2d(&grid, &path);
+    let (r, c, facing) = walk_2d(&grid, &path)?;
     let password = 1000 * (r + 1) + 4 * (c + 1) + facing as i32;
     Ok(format!("Final password is {password}"))
 }
@@ -344,7 +346,7 @@ pub fn part2(input: &str) -> Result<String> {
     let s = face_size(&grid);
     let blocks = find_blocks(&grid, s);
     let faces = build_faces(&blocks, s);
-    let (r, c, facing) = walk_cube(&grid, &faces, s, &path);
+    let (r, c, facing) = walk_cube(&grid, &faces, s, &path)?;
     let password = 1000 * (r + 1) + 4 * (c + 1) + facing;
     Ok(format!("Final password is {password}"))
 }

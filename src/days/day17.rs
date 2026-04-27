@@ -1,16 +1,30 @@
 use anyhow::{bail, Result};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 const WIDTH: i64 = 7;
 const SKYLINE_DEPTH: usize = 32;
 
 type Rock = &'static [(i64, i64)];
 
+// Rock shapes (bottom-left origin). Cells listed as (x, y) offsets.
 const ROCKS: [Rock; 5] = [
+    // ####  (horizontal bar)
     &[(0, 0), (1, 0), (2, 0), (3, 0)],
+    // .#.   (plus)
+    // ###
+    // .#.
     &[(1, 0), (0, 1), (1, 1), (2, 1), (1, 2)],
+    // ..#   (J / reverse-L, base on bottom)
+    // ..#
+    // ###
     &[(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)],
+    // #     (vertical bar)
+    // #
+    // #
+    // #
     &[(0, 0), (0, 1), (0, 2), (0, 3)],
+    // ##    (square)
+    // ##
     &[(0, 0), (1, 0), (0, 1), (1, 1)],
 ];
 
@@ -40,7 +54,8 @@ fn place(grid: &mut Vec<u8>, cells: Rock, cx: i64, cy: i64) {
 fn simulate(jets: &[u8], count: u64) -> u64 {
     let mut grid: Vec<u8> = Vec::new();
     let mut jet_idx = 0usize;
-    let mut seen: HashMap<(usize, usize, [u8; SKYLINE_DEPTH]), (u64, u64)> = HashMap::new();
+    let mut seen: FxHashMap<(usize, usize, [u8; SKYLINE_DEPTH]), (u64, u64)> =
+        FxHashMap::default();
     let mut bonus = 0u64;
     let mut i = 0u64;
     while i < count {

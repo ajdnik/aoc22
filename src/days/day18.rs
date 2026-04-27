@@ -1,8 +1,37 @@
 use crate::utils::file;
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
 use std::collections::{HashSet, VecDeque};
+use std::str::FromStr;
 
 type Voxel = (i32, i32, i32);
+
+fn to_voxels<N, I>(lines: I) -> Result<Vec<(N, N, N)>>
+where
+    N: FromStr,
+    <N as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    I: IntoIterator<Item = String>,
+{
+    lines
+        .into_iter()
+        .filter(|l| !l.is_empty())
+        .map(|line| {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() != 3 {
+                bail!("expected 3 comma-separated values, got {line:?}");
+            }
+            let x: N = parts[0]
+                .parse()
+                .with_context(|| format!("parsing x in {line:?}"))?;
+            let y: N = parts[1]
+                .parse()
+                .with_context(|| format!("parsing y in {line:?}"))?;
+            let z: N = parts[2]
+                .parse()
+                .with_context(|| format!("parsing z in {line:?}"))?;
+            Ok((x, y, z))
+        })
+        .collect()
+}
 
 const NEIGHBORS: [(i32, i32, i32); 6] = [
     (1, 0, 0),
@@ -68,15 +97,46 @@ fn exterior_surface_area(cubes: &HashSet<Voxel>) -> u32 {
 }
 
 pub fn part1(input: &str) -> Result<String> {
-    let voxels = file::to_voxels::<i32, _>(file::lines_of(input))?;
+    let voxels = to_voxels::<i32, _>(file::lines_of(input))?;
     let cubes: HashSet<Voxel> = voxels.into_iter().collect();
     let area = surface_area(&cubes);
     Ok(format!("Total surface area is {area}"))
 }
 
 pub fn part2(input: &str) -> Result<String> {
-    let voxels = file::to_voxels::<i32, _>(file::lines_of(input))?;
+    let voxels = to_voxels::<i32, _>(file::lines_of(input))?;
     let cubes: HashSet<Voxel> = voxels.into_iter().collect();
     let area = exterior_surface_area(&cubes);
     Ok(format!("Exterior surface area is {area}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_three_ints() {
+        let lines = ["1,2,3", "4,5,6"].map(String::from);
+        let v = to_voxels::<i32, _>(lines).unwrap();
+        assert_eq!(v, vec![(1, 2, 3), (4, 5, 6)]);
+    }
+
+    #[test]
+    fn skips_empty_lines() {
+        let lines = ["1,2,3", "", "4,5,6"].map(String::from);
+        let v = to_voxels::<i32, _>(lines).unwrap();
+        assert_eq!(v, vec![(1, 2, 3), (4, 5, 6)]);
+    }
+
+    #[test]
+    fn errors_on_wrong_arity() {
+        let lines = ["1,2".to_string()];
+        assert!(to_voxels::<i32, _>(lines).is_err());
+    }
+
+    #[test]
+    fn errors_on_unparsable() {
+        let lines = ["1,abc,3".to_string()];
+        assert!(to_voxels::<i32, _>(lines).is_err());
+    }
 }

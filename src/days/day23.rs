@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 type Pos = (i32, i32);
 
@@ -23,8 +23,8 @@ const NEIGHBORS_8: [(i32, i32); 8] = [
     (1, 1),
 ];
 
-fn parse(input: &str) -> HashSet<Pos> {
-    let mut elves = HashSet::new();
+fn parse(input: &str) -> FxHashSet<Pos> {
+    let mut elves = FxHashSet::default();
     for (r, line) in input.lines().enumerate() {
         for (c, ch) in line.chars().enumerate() {
             if ch == '#' {
@@ -35,9 +35,9 @@ fn parse(input: &str) -> HashSet<Pos> {
     elves
 }
 
-fn round(elves: &HashSet<Pos>, dir_offset: usize) -> (HashSet<Pos>, bool) {
-    let mut proposals: HashMap<Pos, Pos> = HashMap::new();
-    let mut counts: HashMap<Pos, u32> = HashMap::new();
+fn round(elves: &FxHashSet<Pos>, dir_offset: usize) -> (FxHashSet<Pos>, bool) {
+    let mut proposals: FxHashMap<Pos, Pos> = FxHashMap::default();
+    let mut counts: FxHashMap<Pos, u32> = FxHashMap::default();
     for &(r, c) in elves {
         let alone = !NEIGHBORS_8
             .iter()
@@ -59,7 +59,7 @@ fn round(elves: &HashSet<Pos>, dir_offset: usize) -> (HashSet<Pos>, bool) {
             }
         }
     }
-    let mut new_elves = HashSet::with_capacity(elves.len());
+    let mut new_elves = FxHashSet::with_capacity_and_hasher(elves.len(), Default::default());
     let mut moved = false;
     for &p in elves {
         if let Some(&target) = proposals.get(&p) {
@@ -74,7 +74,7 @@ fn round(elves: &HashSet<Pos>, dir_offset: usize) -> (HashSet<Pos>, bool) {
     (new_elves, moved)
 }
 
-fn bounding_empty(elves: &HashSet<Pos>) -> u32 {
+fn bounding_empty(elves: &FxHashSet<Pos>) -> u32 {
     let (min_r, max_r, min_c, max_c) = elves.iter().fold(
         (i32::MAX, i32::MIN, i32::MAX, i32::MIN),
         |(mn_r, mx_r, mn_c, mx_c), &(r, c)| (mn_r.min(r), mx_r.max(r), mn_c.min(c), mx_c.max(c)),

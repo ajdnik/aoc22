@@ -1,5 +1,5 @@
+use crate::utils::bfs;
 use anyhow::{bail, Result};
-use std::collections::{HashSet, VecDeque};
 
 const DR: [i32; 4] = [-1, 1, 0, 0];
 const DC: [i32; 4] = [0, 0, -1, 1];
@@ -72,38 +72,43 @@ fn parse(input: &str) -> Result<Valley> {
 }
 
 fn shortest(v: &Valley, start: (i32, i32), end: (i32, i32), t0: usize) -> Result<usize> {
-    let mut q = VecDeque::new();
-    let mut visited = HashSet::new();
-    q.push_back((start.0, start.1, t0));
-    visited.insert((start.0, start.1, t0 % v.period));
-    while let Some((r, c, t)) = q.pop_front() {
-        let nt = t + 1;
-        let nt_mod = nt % v.period;
-        for k in 0..5 {
-            let (dr, dc) = if k < 4 { (DR[k], DC[k]) } else { (0, 0) };
-            let nr = r + dr;
-            let nc = c + dc;
-            if (nr, nc) == end {
-                return Ok(nt);
-            }
-            if (nr, nc) == start {
-                if visited.insert((nr, nc, nt_mod)) {
-                    q.push_back((nr, nc, nt));
+    let period = v.period;
+    let h = v.h as i32;
+    let w = v.w as i32;
+    let initial = (start.0, start.1, t0 % period);
+    let steps = bfs::shortest(
+        initial,
+        |&(r, c, tm)| {
+            let nt_mod = (tm + 1) % period;
+            let mut out = Vec::with_capacity(5);
+            for k in 0..5 {
+                let (dr, dc) = if k < 4 { (DR[k], DC[k]) } else { (0, 0) };
+                let nr = r + dr;
+                let nc = c + dc;
+                if (nr, nc) == end {
+                    out.push((nr, nc, nt_mod));
+                    continue;
                 }
-                continue;
+                if (nr, nc) == start {
+                    out.push((nr, nc, nt_mod));
+                    continue;
+                }
+                if nr < 0 || nr >= h || nc < 0 || nc >= w {
+                    continue;
+                }
+                if v.blocked[nt_mod][nr as usize * v.w + nc as usize] {
+                    continue;
+                }
+                out.push((nr, nc, nt_mod));
             }
-            if nr < 0 || nr >= v.h as i32 || nc < 0 || nc >= v.w as i32 {
-                continue;
-            }
-            if v.blocked[nt_mod][nr as usize * v.w + nc as usize] {
-                continue;
-            }
-            if visited.insert((nr, nc, nt_mod)) {
-                q.push_back((nr, nc, nt));
-            }
-        }
+            out
+        },
+        |&(r, c, _)| (r, c) == end,
+    );
+    match steps {
+        Some(d) => Ok(t0 + d),
+        None => bail!("no path from {:?} to {:?}", start, end),
     }
-    bail!("no path from {:?} to {:?}", start, end)
 }
 
 pub fn part1(input: &str) -> Result<String> {
